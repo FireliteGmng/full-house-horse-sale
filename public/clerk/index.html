@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clerk Panel — Full House Horse Sale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/clerk-static/clerk.css">
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="screen active">
+    <div class="login-card western-box">
+      <a href="/" class="btn btn-outline btn-sm login-back-btn">&larr; Back to Home</a>
+      <img src="/logo.webp" alt="Full House Horse Sale" class="login-logo">
+      <h2>Clerk Panel</h2>
+      <form id="login-form" onsubmit="submitLogin(event)">
+        <div class="form-row">
+          <input type="password" id="login-pw" placeholder="Enter clerk password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+      </form>
+      <div id="login-error" class="error-msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboard-screen" class="screen">
+    <header class="clerk-header">
+      <div class="header-left">
+        <img src="/logo.webp" alt="Logo" class="header-logo">
+        <span class="header-title">Clerk Panel</span>
+      </div>
+      <a href="/" class="btn btn-outline btn-sm">Home</a>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()">Sign Out</button>
+    </header>
+
+    <div class="dashboard-grid">
+      <!-- YouTube Live Stream URL (Global) -->
+      <div class="western-box dash-card youtube-setting-card">
+        <div class="card-header-row">
+          <h3>YouTube Live Stream</h3>
+        </div>
+        <p class="setting-desc">Set the YouTube Live URL here. This applies to all sales and will be shown to bidders and on the display board.</p>
+        <div class="form-row youtube-row">
+          <input type="url" id="global-youtube-url" placeholder="https://youtube.com/watch?v=..." onchange="saveYoutubeUrl()">
+          <button class="btn btn-primary btn-sm" onclick="saveYoutubeUrl()">Save</button>
+        </div>
+        <div id="youtube-preview" class="youtube-preview hidden">
+          <iframe id="youtube-preview-iframe" width="100%" height="200" frameborder="0" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <!-- Sales -->
+      <div class="western-box dash-card">
+        <div class="card-header-row">
+          <h3>Sales</h3>
+          <button class="btn btn-primary btn-sm" onclick="createNewSale()">+ Create New Sale</button>
+        </div>
+        <div id="sales-list" class="sales-list"></div>
+      </div>
+
+      <!-- Buyer Approvals -->
+      <div class="western-box dash-card">
+        <div class="card-header-row">
+          <h3>Buyer Approvals</h3>
+          <span class="badge badge-pending" id="pending-count">0 pending</span>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="showBuyerTab('pending', this)">Pending</button>
+          <button class="tab-btn" onclick="showBuyerTab('approved', this)">Approved</button>
+          <button class="tab-btn" onclick="showBuyerTab('all', this)">All</button>
+        </div>
+        <div id="buyers-list" class="buyers-list"></div>
+      </div>
+
+      <!-- Roster -->
+      <div class="western-box dash-card">
+        <div class="card-header-row">
+          <h3>Roster</h3>
+          <span class="badge" id="roster-status-badge">Not Published</span>
+        </div>
+        <p class="setting-desc">Publish a sale's horse lineup as a viewable roster on the homepage. Visitors can browse the horses and view details.</p>
+        <div id="roster-sale-select">
+          <label class="form-label">Select a sale to publish as roster:</label>
+          <select id="roster-sale-dropdown" class="form-input">
+            <option value="">-- Select Sale --</option>
+          </select>
+          <div class="roster-actions">
+            <button class="btn btn-primary btn-sm" onclick="publishRoster()">Publish Roster</button>
+            <button class="btn btn-outline btn-sm" onclick="unpublishRoster()" id="unpublish-roster-btn" style="display:none">Unpublish</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Newsletters -->
+      <div class="western-box dash-card">
+        <div class="card-header-row">
+          <h3>Newsletters</h3>
+          <button class="btn btn-primary btn-sm" onclick="openNewsletterModal()">+ Post Newsletter</button>
+        </div>
+        <p class="setting-desc">Post updates about upcoming sales. These show on the homepage for all visitors.</p>
+        <div id="newsletters-list" class="newsletters-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEWSLETTER MODAL -->
+  <div id="newsletter-modal" class="modal-overlay">
+    <div class="modal western-box">
+      <div class="modal-header">
+        <h3 id="newsletter-modal-title">Post Newsletter</h3>
+        <button class="modal-close" onclick="closeNewsletterModal()">&times;</button>
+      </div>
+      <form id="newsletter-form" onsubmit="saveNewsletter(event)">
+        <div class="form-row">
+          <label class="form-label">Title</label>
+          <input type="text" id="nl-title" class="form-input" placeholder="Newsletter title" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Sale Date (optional)</label>
+          <input type="date" id="nl-sale-date" class="form-input">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Description</label>
+          <textarea id="nl-description" class="form-input" rows="4" placeholder="Write your newsletter content..."></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Photo (optional)</label>
+          <input type="file" id="nl-photo" class="form-input" accept="image/*">
+        </div>
+        <input type="hidden" id="nl-edit-id" value="">
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeNewsletterModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CREATE/EDIT SALE SCREEN -->
+  <div id="sale-editor-screen" class="screen">
+    <header class="clerk-header">
+      <div class="header-left">
+        <button class="btn btn-outline btn-sm" onclick="backToDashboard()">&#8592; Back</button>
+        <span class="header-title" id="sale-editor-title">Create Sale</span>
+        <span class="badge badge-draft" id="sale-status-badge">Draft</span>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-success" id="btn-go-live" onclick="openGoLiveModal()">Go Live</button>
+      </div>
+    </header>
+
+    <div class="sale-editor-body">
+      <div class="western-box sale-setup">
+        <h3>Sale Details</h3>
+        <div class="form-row">
+          <label>Sale Name</label>
+          <input type="text" id="sale-name" placeholder="e.g. Spring Horse Sale 2026" onchange="autoSaveSale()">
+        </div>
+        <div class="form-row">
+          <label>Date of Sale</label>
+          <input type="date" id="sale-date" onchange="autoSaveSale()">
+        </div>
+      </div>
+
+      <div class="western-box animal-lineup-card">
+        <div class="card-header-row">
+          <h3>Horses</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddAnimal()">+ Add Horse</button>
+        </div>
+        <div id="animal-list" class="animal-list"></div>
+        <div id="animal-empty" class="list-empty">No horses added yet. Click "+ Add Horse" to get started.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE SALE SCREEN -->
+  <div id="live-sale-screen" class="screen">
+    <header class="clerk-header">
+      <div class="header-left">
+        <img src="/logo.webp" alt="Logo" class="header-logo">
+        <span class="header-title">Live Sale</span>
+        <span class="badge badge-live">LIVE</span>
+        <span class="sale-timer" id="sale-timer">00:00:00</span>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-danger btn-sm" onclick="confirmEndSale()">End Sale</button>
+      </div>
+    </header>
+
+    <div class="live-grid">
+      <!-- Current Animal -->
+      <div class="western-box live-current">
+        <div id="live-waiting" class="live-waiting">
+          <p>Click "Next Animal" to start with the first horse.</p>
+        </div>
+        <div id="live-animal-display" class="hidden">
+          <div class="live-animal-top">
+            <div class="live-animal-photo" id="live-photo"></div>
+            <div class="live-animal-info">
+              <h2 id="live-animal-name">—</h2>
+              <div class="live-meta">
+                <span id="live-animal-breed"></span>
+                <span id="live-animal-age"></span>
+                <span id="live-animal-sex"></span>
+              </div>
+              <p id="live-animal-desc" class="live-desc"></p>
+            </div>
+          </div>
+          <div class="live-bid-info">
+            <div class="bid-box">
+              <label>Current Bid</label>
+              <span class="bid-amount" id="live-current-bid">$0</span>
+            </div>
+            <div class="bid-box">
+              <label>High Bidder</label>
+              <span id="live-high-bidder">—</span>
+            </div>
+            <div class="bid-box">
+              <label>Increment</label>
+              <span id="live-increment">—</span>
+              <button class="btn btn-sm btn-outline" id="btn-change-increment" onclick="openChangeIncrementModal()" style="margin-top:6px;font-size:0.75rem;padding:4px 10px;">Change</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="live-actions">
+          <button class="btn btn-primary" id="btn-inperson" onclick="clerkInPersonBid()">In-Person Bid +</button>
+          <button class="btn btn-success" id="btn-mark-sold" onclick="openSoldModal()">Mark as Sold</button>
+          <button class="btn btn-warning" id="btn-skip" onclick="confirmSkip()">Skip Horse</button>
+          <button class="btn btn-outline" id="btn-next-animal" onclick="openIncrementModal()">Next Animal →</button>
+        </div>
+
+        <!-- Online bid alert -->
+        <div class="online-bid-alert hidden" id="online-bid-alert">
+          <span class="pulse-dot"></span>
+          <span id="online-bid-text">Online bid received!</span>
+        </div>
+      </div>
+
+      <!-- Lineup sidebar -->
+      <div class="western-box live-lineup-card">
+        <h3>Lineup</h3>
+        <div id="live-lineup-list" class="live-lineup-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POST-SALE SCREEN -->
+  <div id="post-sale-screen" class="screen">
+    <header class="clerk-header">
+      <div class="header-left">
+        <button class="btn btn-outline btn-sm" onclick="backToDashboard()">&#8592; Back</button>
+        <span class="header-title">Sale Results</span>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary btn-sm" onclick="exportSale()">Export to Excel</button>
+        <button class="btn btn-outline btn-sm" onclick="rerunSale()">Re-run Sale</button>
+      </div>
+    </header>
+
+    <div class="post-sale-body">
+      <div class="western-box">
+        <h3>Summary</h3>
+        <div class="sale-summary" id="sale-summary"></div>
+      </div>
+
+      <div class="western-box">
+        <div class="card-header-row">
+          <h3>Results</h3>
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="showResultsTab('all', this)">All</button>
+            <button class="tab-btn" onclick="showResultsTab('sold', this)">Sold</button>
+            <button class="tab-btn" onclick="showResultsTab('skipped', this)">Skipped</button>
+          </div>
+        </div>
+        <div id="results-list" class="results-list"></div>
+      </div>
+
+      <div class="western-box">
+        <div class="card-header-row">
+          <h3>Buyers</h3>
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="showSaleBuyersTab('all', this)">All</button>
+            <button class="tab-btn" onclick="showSaleBuyersTab('online', this)">Online</button>
+            <button class="tab-btn" onclick="showSaleBuyersTab('inperson', this)">In Person</button>
+          </div>
+        </div>
+        <div id="sale-buyers-list" class="sale-buyers-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Add/Edit Animal Modal -->
+  <div class="modal-overlay" id="animal-modal">
+    <div class="modal western-box">
+      <h3 id="animal-modal-title">Add Horse</h3>
+      <form id="animal-form" onsubmit="saveAnimal(event)">
+        <input type="hidden" id="animal-id">
+        <div class="form-row"><label>Name *</label><input type="text" id="animal-name" required></div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>Age</label><input type="text" id="animal-age" placeholder="e.g. 3 years"></div>
+          <div class="form-row"><label>Sex</label><select id="animal-sex"><option value="">Select...</option><option value="Gelding">Gelding</option><option value="Stud">Stud</option><option value="Mare">Mare</option></select></div>
+        </div>
+        <div class="form-row"><label>Breed</label><input type="text" id="animal-breed" placeholder="e.g. Quarter Horse"></div>
+        <div class="form-row"><label>Starting Price ($)</label><input type="number" id="animal-start" min="0" step="50" value="0"></div>
+        <div class="form-row"><label>Description</label><textarea id="animal-desc" rows="3" placeholder="Optional description..."></textarea></div>
+        <div class="form-row">
+          <label>Photo</label>
+          <input type="file" id="animal-photo" accept="image/*">
+          <div id="animal-photo-preview" class="photo-preview hidden"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeAnimalModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Horse</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Go Live Modal -->
+  <div class="modal-overlay" id="golive-modal">
+    <div class="modal western-box">
+      <h3>Go Live</h3>
+      <p>Confirm you're ready to start the live sale.</p>
+      <div class="form-row">
+        <label>Sale Preset</label>
+        <select id="golive-preset">
+          <option value="standard">Standard Auction</option>
+          <option value="quick">Quick Sale</option>
+          <option value="premium">Premium Sale</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeGoLiveModal()">Cancel</button>
+        <button class="btn btn-success" onclick="goLive()">Go Live Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Increment Modal -->
+  <div class="modal-overlay" id="increment-modal">
+    <div class="modal western-box">
+      <h3>Set Price Increment</h3>
+      <p>How much should the bid increase each time for the next horse?</p>
+      <div class="increment-presets">
+        <button class="btn btn-outline increment-preset-btn" onclick="selectIncrementPreset('500', this)">$500</button>
+        <button class="btn btn-outline increment-preset-btn" onclick="selectIncrementPreset('1000', this)">$1,000</button>
+        <button class="btn btn-outline increment-preset-btn" onclick="selectIncrementPreset('other', this)">Other</button>
+      </div>
+      <div class="form-row">
+        <input type="number" id="increment-input" min="1" step="25" placeholder="Enter custom increment..." style="display:none">
+      </div>
+      <div class="form-row">
+        <label>Starting Price (optional)</label>
+        <input type="number" id="starting-price-input" min="0" step="50" placeholder="Leave blank to use horse's default">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeIncrementModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="moveToNextAnimal()">Start Next Horse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sold Modal -->
+  <div class="modal-overlay" id="sold-modal">
+    <div class="modal western-box">
+      <h3>Mark as Sold</h3>
+      <p>How was this horse sold?</p>
+      <div class="sold-options" id="sold-options">
+        <button class="btn btn-primary btn-lg" onclick="soldOnline()">Most Recent Online Bid</button>
+        <button class="btn btn-outline btn-lg" onclick="showInPersonForm()">In Person</button>
+      </div>
+      <div id="inperson-form" class="hidden">
+        <div class="form-row"><label>Bidder Number *</label><input type="text" id="sold-buyer-number" placeholder="Bidder number (required)"></div>
+        <div class="form-row"><label>Buyer Name</label><input type="text" id="sold-buyer-name" placeholder="Name (optional)"></div>
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="hideInPersonForm()">&#8592; Back</button>
+          <button class="btn btn-primary" onclick="soldInPerson()">Confirm Sale</button>
+        </div>
+      </div>
+      <div class="modal-actions" id="sold-modal-cancel">
+        <button class="btn btn-outline" onclick="closeSoldModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skip Confirmation Modal -->
+  <div class="modal-overlay" id="skip-modal">
+    <div class="modal western-box">
+      <h3>Skip Horse?</h3>
+      <p>Are you sure you want to skip this horse? It will be marked as skipped in the sale results.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeSkipModal()">Cancel</button>
+        <button class="btn btn-warning" onclick="doSkip()">Yes, Skip This Horse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Sale Confirmation -->
+  <div class="modal-overlay" id="endsale-modal">
+    <div class="modal western-box">
+      <h3>End Sale?</h3>
+      <p>Are you sure you want to end this sale? All data will be saved and the timer will stop.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeEndSaleModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="doEndSale()">End Sale</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="reorder-modal">
+    <div class="modal western-box">
+      <h3>Move Horse Here?</h3>
+      <p id="reorder-msg">Do you want to put this horse here?</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="cancelReorder()">No</button>
+        <button class="btn btn-primary" onclick="confirmReorder()">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="change-increment-modal">
+    <div class="modal western-box">
+      <h3>Change Bid Increment</h3>
+      <p>Select a new increment for the current horse:</p>
+      <div class="increment-presets" id="ci-presets">
+        <button class="btn btn-outline preset-btn" onclick="selectCIPreset(500)">$500</button>
+        <button class="btn btn-outline preset-btn" onclick="selectCIPreset(1000)">$1,000</button>
+        <button class="btn btn-outline preset-btn" onclick="selectCIPreset('other')">Other</button>
+      </div>
+      <div class="hidden" id="ci-custom-wrap" style="margin-top:10px;">
+        <label>Custom Increment ($)</label>
+        <input type="number" id="ci-custom-input" min="1" placeholder="Enter amount">
+      </div>
+      <div class="modal-actions" style="margin-top:15px;">
+        <button class="btn btn-outline" onclick="closeCIModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmChangeIncrement()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/clerk-static/clerk.js"></script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bidder Portal — Full House Horse Sale</title>
+  <link rel="stylesheet" href="/bidder-static/bidder.css" />
+</head>
+<body>
+
+<!-- AUTH SCREEN (shown when not logged in) -->
+<div id="auth-screen" class="auth-screen hidden">
+  <div class="auth-card glass">
+    <div class="auth-logo">
+      <img src="/logo.webp" alt="Full House Horse Sale" />
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <div class="alert alert-error" id="login-error"></div>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" /></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Password" onkeydown="if(event.key==='Enter')submitLogin()" /></div>
+      <button class="btn btn-gold btn-full" onclick="submitLogin()">Sign In</button>
+      <p class="auth-back"><a href="/">Back to home</a></p>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="register-form" class="hidden">
+      <div class="alert alert-error" id="register-error"></div>
+      <div class="alert alert-success" id="register-success"></div>
+      <div class="field"><label>Full Name (optional)</label><input type="text" id="reg-name" placeholder="John Smith" /></div>
+      <div class="field-row">
+        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com" /></div>
+        <div class="field"><label>Phone</label><input type="tel" id="reg-phone" placeholder="555-000-0000" /></div>
+      </div>
+      <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Choose a password" /></div>
+      <div class="field"><label>Address</label><input type="text" id="reg-address" placeholder="123 Main St, City, State" /></div>
+      <div class="divider"></div>
+      <p class="section-label-sm">Banking Information</p>
+      <div class="field"><label>Bank Name</label><input type="text" id="reg-bank-name" placeholder="First National Bank" /></div>
+      <div class="field-row">
+        <div class="field"><label>Bank Phone</label><input type="tel" id="reg-bank-phone" placeholder="555-000-0000" /></div>
+        <div class="field"><label>Loan Officer</label><input type="text" id="reg-loan-officer" placeholder="Jane Doe" /></div>
+      </div>
+      <button class="btn btn-gold btn-full" onclick="submitRegister()">Submit Registration</button>
+      <p class="auth-back"><a href="/">Back to home</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN BIDDER PORTAL (shown when logged in) -->
+<div id="bidder-portal" class="bidder-portal hidden">
+
+  <!-- HEADER -->
+  <header class="bidder-header">
+    <a href="/" class="bidder-logo">
+      <img src="/logo.webp" alt="Full House Horse Sale" style="height:36px;width:auto;" />
+      <span>Bidder Portal</span>
+    </a>
+    <div class="bidder-header-right">
+      <span class="live-badge hidden" id="live-badge">
+        <span class="live-dot"></span>Live
+      </span>
+      <span class="buyer-number-badge" id="buyer-number-badge"></span>
+      <span class="user-name-label" id="user-name-label"></span>
+      <button class="btn btn-ghost btn-sm notif-btn" id="notif-btn" onclick="toggleNotifications()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-badge hidden" id="notif-badge">0</span>
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- STATUS BANNERS -->
+  <div class="status-banner pending-banner hidden" id="pending-banner">
+    Your account is pending approval by the clerk. You can watch the sale but cannot place bids yet.
+  </div>
+  <div class="status-banner denied-banner hidden" id="denied-banner">
+    Your account registration was not approved. Please contact the auction house for assistance.
+  </div>
+
+  <!-- PORTAL BODY -->
+  <div class="portal-body">
+
+    <!-- LEFT: Stream + Lot -->
+    <div class="portal-main">
+
+      <!-- Stream -->
+      <div class="stream-card glass">
+        <div class="stream-header">
+          <span class="section-label">Live Stream</span>
+          <span class="badge badge-muted" id="stream-badge">Waiting</span>
+        </div>
+        <div class="stream-frame">
+          <div class="stream-placeholder" id="stream-placeholder">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="4" y="8" width="40" height="28" rx="3"/><path d="M16 44h16M24 36v8"/><path d="M20 20l10 4-10 4V20z" fill="currentColor" stroke="none"/></svg>
+            <p>Stream will appear here when the sale begins</p>
+          </div>
+          <iframe id="stream-iframe" class="hidden" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+        </div>
+      </div>
+
+      <!-- Current Lot -->
+      <div class="lot-wrapper" id="lot-wrapper">
+        <div class="lot-card glass" id="lot-card">
+          <div class="lot-idle" id="lot-idle">
+            <div class="lot-idle-icon">
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><circle cx="24" cy="24" r="18"/><path d="M24 16v8l5 3"/></svg>
+            </div>
+            <h3>Auction Not Yet Started</h3>
+            <p>The sale will begin shortly.</p>
+          </div>
+          <div class="lot-active hidden" id="lot-active">
+            <div class="lot-photo-wrap hidden" id="lot-photo-wrap">
+              <img id="lot-photo" src="" alt="" class="lot-photo" />
+            </div>
+            <div class="lot-info">
+              <div class="lot-meta">
+                <span class="section-label">Current Lot</span>
+                <span class="badge badge-gold" id="lot-badge">Active</span>
+              </div>
+              <h2 class="lot-name" id="lot-name">—</h2>
+              <p class="lot-horse-details" id="lot-details"></p>
+              <p class="lot-desc" id="lot-desc"></p>
+              <div class="lot-bid-row">
+                <div class="lot-bid-block">
+                  <span class="bid-label">Current Bid</span>
+                  <span class="bid-amount" id="lot-bid">$0</span>
+                </div>
+                <div class="lot-bid-block">
+                  <span class="bid-label">High Bidder</span>
+                  <span class="bid-bidder" id="lot-bidder">—</span>
+                </div>
+                <div class="lot-bid-block">
+                  <span class="bid-label">Next Bid</span>
+                  <span class="bid-next" id="lot-next">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Waiting for next horse -->
+        <div class="lot-waiting hidden" id="lot-waiting">
+          <div class="lot-idle-icon">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><circle cx="24" cy="24" r="18"/><path d="M24 16v8l5 3"/></svg>
+          </div>
+          <h3>Waiting for Next Horse</h3>
+          <p>The clerk is preparing the next lot. Please stand by.</p>
+        </div>
+      </div>
+
+      <!-- Bid Button -->
+      <div id="bid-area" class="bid-area hidden">
+        <button class="btn btn-gold btn-lg w-full bid-btn" id="bid-btn" onclick="placeBid()">Place Bid</button>
+        <p class="bid-hint" id="bid-hint"></p>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Bid Feed -->
+    <div class="portal-sidebar">
+      <div class="feed-card glass">
+        <div class="feed-header">
+          <span class="section-label">Bid Activity</span>
+          <span class="feed-count" id="feed-count">0 bids</span>
+        </div>
+        <div class="feed-list" id="feed-list">
+          <div class="feed-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="24" height="24"><path d="M8 12h8M8 8h5M5 20V4a1 1 0 011-1h12a1 1 0 011 1v16l-4-2-4 2-4-2-2 2z"/></svg>
+            <p>Bids will appear here in real time</p>
+          </div>
+        </div>
+        <div class="feed-legend">
+          <span class="legend-item"><span class="legend-dot online"></span>Online</span>
+          <span class="legend-item"><span class="legend-dot inperson"></span>In-person</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-panel hidden" id="notif-panel">
+  <div class="notif-panel-header">
+    <h3>Notifications</h3>
+    <button class="btn btn-ghost btn-sm" onclick="toggleNotifications()">&times;</button>
+  </div>
+  <div class="notif-list" id="notif-list">
+    <div class="notif-empty">No notifications yet</div>
+  </div>
+</div>
+<!-- PURCHASE NOTIFICATION POPUP -->
+<div class="purchase-popup hidden" id="purchase-popup">
+  <div class="purchase-popup-content">
+    <div class="purchase-popup-icon">&#10003;</div>
+    <h3 id="purchase-popup-title">Purchase Confirmed!</h3>
+    <p id="purchase-popup-message"></p>
+    <div class="purchase-popup-details">
+      <span class="purchase-horse" id="purchase-popup-horse"></span>
+      <span class="purchase-price" id="purchase-popup-price"></span>
+    </div>
+    <button class="btn btn-primary" onclick="closePurchasePopup()">OK</button>
+  </div>
+</div>
+<!-- SOLD OVERLAY -->
+<div class="sold-overlay hidden" id="sold-overlay">
+  <div class="sold-text">SOLD</div>
+  <div class="sold-details" id="sold-details"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/bidder-static/bidder.js"></script>
+</body>
+</html>
