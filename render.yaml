@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: horse-auction
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_PASSWORD
+        value: AuctionClerk2024!
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATA_DIR
+        value: /var/data
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+    disk:
+      name: horse-auction-data
+      mountPath: /var/data
+      sizeGB: 1
