@@ -1346,19 +1346,44 @@ function initSocket() {
     const idle = document.getElementById('stream-idle');
     const badge = document.getElementById('stream-badge');
     if (data.stream_display_enabled && data.youtube_url) {
+      homeStreamUrl = data.youtube_url;
       iframe.src = data.youtube_url;
       iframe.classList.remove('hidden');
       idle.classList.add('hidden');
       badge.textContent = 'Live';
       document.getElementById('nav-live').classList.remove('hidden');
+      startHomeStreamAutoRefresh();
     } else {
+      homeStreamUrl = null;
       iframe.src = '';
       iframe.classList.add('hidden');
       idle.classList.remove('hidden');
       badge.textContent = 'Waiting for stream';
       document.getElementById('nav-live').classList.add('hidden');
+      stopHomeStreamAutoRefresh();
     }
   });
+}
+
+// ─── STREAM AUTO-REFRESH (keeps stream live, prevents pausing) ──────────────
+let homeStreamUrl = null;
+let homeStreamRefreshInterval = null;
+
+function startHomeStreamAutoRefresh() {
+  if (homeStreamRefreshInterval) clearInterval(homeStreamRefreshInterval);
+  homeStreamRefreshInterval = setInterval(() => {
+    if (!homeStreamUrl) return;
+    const iframe = document.getElementById('stream-iframe');
+    if (!iframe || iframe.classList.contains('hidden')) return;
+    iframe.src = homeStreamUrl;
+  }, 10000);
+}
+
+function stopHomeStreamAutoRefresh() {
+  if (homeStreamRefreshInterval) {
+    clearInterval(homeStreamRefreshInterval);
+    homeStreamRefreshInterval = null;
+  }
 }
 
 // ─── APPLY STATE ────────────────────────────────────────────────────────────
@@ -1374,17 +1399,21 @@ function applyState(state) {
     if (iframe.src !== state.youtube_url) {
       iframe.src = state.youtube_url;
     }
+    homeStreamUrl = state.youtube_url;
     iframe.classList.remove('hidden');
     idle.classList.add('hidden');
     badge.textContent = 'Live';
     document.getElementById('nav-live').classList.remove('hidden');
+    startHomeStreamAutoRefresh();
   } else if (state.stream_display_enabled === false) {
     // Only hide when explicitly disabled
     iframe.src = '';
+    homeStreamUrl = null;
     iframe.classList.add('hidden');
     idle.classList.remove('hidden');
     badge.textContent = 'Waiting for stream';
     document.getElementById('nav-live').classList.add('hidden');
+    stopHomeStreamAutoRefresh();
   }
   // If stream_display_enabled is undefined, don't touch the stream
 
