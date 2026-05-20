@@ -198,26 +198,31 @@ socket.on('stream_display_toggled', (data) => {
 
 // ─── STREAM MANAGEMENT ───────────────────────────────────────────────────
 function updateStream(state) {
-  if (state.stream_display_enabled && state.youtube_url) {
-    // Only update iframe src if URL actually changed
+  // Only hide the stream if the server EXPLICITLY says stream_display_enabled === false
+  // Never hide it just because the field is missing/undefined
+  if (state.stream_display_enabled === true && state.youtube_url) {
+    // Stream should be showing
     if (state.youtube_url !== lastStreamUrl) {
       lastStreamUrl = state.youtube_url;
       showStream(state.youtube_url);
     } else {
-      // Just make sure it's visible
+      // Just make sure it's still visible (don't reload iframe)
       const iframe = document.getElementById('stream-iframe');
       const streamPlaceholder = document.getElementById('stream-placeholder');
-      iframe.classList.remove('hidden');
-      streamPlaceholder.classList.add('hidden');
+      if (iframe.classList.contains('hidden')) {
+        iframe.classList.remove('hidden');
+        streamPlaceholder.classList.add('hidden');
+      }
       document.getElementById('stream-badge').textContent = 'Live';
       document.getElementById('stream-badge').className = 'badge badge-green';
     }
   } else if (state.stream_display_enabled === false) {
-    // Only hide if explicitly disabled
+    // ONLY hide if server explicitly says disabled
     lastStreamUrl = null;
     hideStream();
   }
-  // If stream_display_enabled is undefined/null in the state, don't touch the stream at all
+  // If stream_display_enabled is undefined/null/missing, leave stream as-is
+  // This prevents the stream from disappearing during state transitions
 }
 
 function showStream(url) {

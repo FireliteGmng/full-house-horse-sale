@@ -1366,11 +1366,11 @@ function applyState(state) {
   if (!state) return;
   currentState = state;
 
-  // Stream
+  // Stream — only hide if server explicitly says disabled
   const iframe = document.getElementById('stream-iframe');
   const idle = document.getElementById('stream-idle');
   const badge = document.getElementById('stream-badge');
-  if (state.youtube_url && state.stream_display_enabled) {
+  if (state.stream_display_enabled === true && state.youtube_url) {
     if (iframe.src !== state.youtube_url) {
       iframe.src = state.youtube_url;
     }
@@ -1378,13 +1378,15 @@ function applyState(state) {
     idle.classList.add('hidden');
     badge.textContent = 'Live';
     document.getElementById('nav-live').classList.remove('hidden');
-  } else {
+  } else if (state.stream_display_enabled === false) {
+    // Only hide when explicitly disabled
     iframe.src = '';
     iframe.classList.add('hidden');
     idle.classList.remove('hidden');
     badge.textContent = 'Waiting for stream';
     document.getElementById('nav-live').classList.add('hidden');
   }
+  // If stream_display_enabled is undefined, don't touch the stream
 
   // Stats
   if (state.total_lots !== undefined) document.getElementById('stat-lots').textContent = state.total_lots;

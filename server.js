@@ -174,13 +174,9 @@ app.get('/api/me', (req, res) => {
 
 // ─── PUBLIC AUCTION API ───────────────────────────────────────────────────────
 app.get('/api/state', (req, res) => {
-  const state = db.getSaleState();
-  // Include global youtube embed URL and display toggle
-  const rawUrl = db.getSetting('youtube_url') || '';
-  const displayEnabled = db.getSetting('stream_display_enabled') === '1';
-  state.youtube_url = displayEnabled ? buildYoutubeEmbed(rawUrl) : null;
-  state.stream_display_enabled = displayEnabled;
-  res.json(state);
+  const state = db.getSaleState() || {};
+  // Use enrichState for consistency
+  res.json(enrichState(state));
 });
 
 // Get all animals for the active sale (for bidder browsing)
@@ -286,10 +282,12 @@ function buildYoutubeEmbed(url) {
 
 // Helper: enrich any state object with stream info before emitting
 function enrichState(state) {
-  if (!state) return state;
+  if (!state) state = {};
   const rawUrl = db.getSetting('youtube_url') || '';
   const displayEnabled = db.getSetting('stream_display_enabled') === '1';
-  state.youtube_url = displayEnabled ? buildYoutubeEmbed(rawUrl) : null;
+  const embedUrl = buildYoutubeEmbed(rawUrl);
+  // Always include stream fields so clients never lose stream state
+  state.youtube_url = (displayEnabled && embedUrl) ? embedUrl : null;
   state.stream_display_enabled = displayEnabled;
   return state;
 }
