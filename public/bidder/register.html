@@ -13,7 +13,6 @@
       font-size: 15px;
       line-height: 1.5;
       color: #1a1a1a;
-      /* CRITICAL: normal document flow, body scrolls naturally */
     }
     .page-wrapper {
       width: 100%;
@@ -21,6 +20,18 @@
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
+    .back-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #8a7a6a;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+    .back-arrow:hover { color: #b91c1c; }
+    .back-arrow svg { width: 18px; height: 18px; }
     .logo {
       display: block;
       width: 90px;
@@ -153,6 +164,11 @@
 <body>
 
 <div class="page-wrapper">
+  <a href="/" class="back-arrow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    Back to Home
+  </a>
+
   <img src="/logo.webp" alt="Full House Horse Sale" class="logo" />
   <h1>Create Account</h1>
   <p class="subtitle">Register to bid in the auction</p>
@@ -266,9 +282,11 @@ async function submitRegister() {
       btn.textContent = 'Submit Registration';
       return;
     }
-    showSuccess('Registration submitted! The clerk will review and approve your account shortly. Redirecting to sign in...');
+    // Registration successful — server auto-logs them in
+    // Redirect to bidder portal (will show pending lock screen)
+    showSuccess('Registration submitted! Redirecting...');
     btn.textContent = 'Success!';
-    setTimeout(() => { window.location.href = '/bidder'; }, 2500);
+    setTimeout(() => { window.location.href = '/bidder'; }, 1000);
   } catch (e) {
     showError('Network error. Please try again.');
     btn.disabled = false;

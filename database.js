@@ -168,6 +168,10 @@ function denyBuyer(id) {
   db.prepare("UPDATE buyers SET status = 'denied' WHERE id = ?").run(id);
 }
 
+function deleteBuyer(id) {
+  db.prepare('DELETE FROM buyers WHERE id = ?').run(id);
+}
+
 function verifyBuyer(email, password) {
   const buyer = getBuyerByEmail(email);
   if (!buyer) return null;
@@ -570,7 +574,7 @@ function getUnreadCount(buyerId) {
 module.exports = {
   db,
   registerBuyer, getBuyerByEmail, getBuyerById, getAllBuyers,
-  approveBuyer, denyBuyer, verifyBuyer, updateBuyerPassword,
+  approveBuyer, denyBuyer, deleteBuyer, verifyBuyer, updateBuyerPassword,
   createSale, getSaleById, getAllSales, updateSale, deleteSale, goLive, endSale,
   getAnimals, getAnimalById, addAnimal, updateAnimal, deleteAnimal, reorderAnimals,
   markAnimalSold, skipAnimal, resetAnimalStatus,

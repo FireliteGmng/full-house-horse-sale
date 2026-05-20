@@ -158,6 +158,86 @@ a { color: inherit; text-decoration: none; }
 .auth-back a { color: var(--accent); }
 .auth-back a:hover { text-decoration: underline; }
 
+/* ─── PENDING LOCK SCREEN ─── */
+.pending-lock-screen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(180deg, #fffbf7 0%, #fff 100%);
+}
+.pending-lock-content {
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+}
+.pending-lock-logo {
+  width: 100px;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  display: block;
+}
+.pending-lock-icon {
+  width: 80px; height: 80px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: var(--warm-100);
+  border: 2px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+}
+.pending-lock-icon.denied-icon {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.pending-lock-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brown-900, #3b2012);
+  margin-bottom: 0.75rem;
+}
+.pending-lock-msg {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+.pending-lock-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+.pending-lock-spinner {
+  width: 32px; height: 32px;
+  margin: 0 auto;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: lockSpin 1s linear infinite;
+}
+@keyframes lockSpin {
+  to { transform: rotate(360deg); }
+}
+.pending-lock-btn {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.pending-lock-btn:hover { background: var(--accent-hover); }
+
 /* ─── HEADER ─── */
 .bidder-header {
   height: 60px; background: #fff;

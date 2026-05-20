@@ -125,6 +125,12 @@ app.post('/api/register', (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
   try {
     const result = db.registerBuyer({ full_name, email, password, phone, address, bank_name, bank_phone, loan_officer });
+    // Auto-login after registration
+    const buyer = db.verifyBuyer(email, password);
+    if (buyer) {
+      req.session.buyerId = buyer.id;
+      req.session.buyerNumber = buyer.buyer_number;
+    }
     res.json({ ok: true, id: result.lastInsertRowid });
   } catch (e) {
     if (e.message.includes('UNIQUE')) return res.status(409).json({ error: 'Email already registered.' });
@@ -684,11 +690,22 @@ app.get('/clerk/api/buyers', requireAdmin, (req, res) => {
 
 app.post('/clerk/api/buyers/:id/approve', requireAdmin, (req, res) => {
   const buyer = db.approveBuyer(parseInt(req.params.id));
+  // Emit real-time approval notification to the pending buyer
+  io.to('pending_' + req.params.id).emit('account_approved', {
+    buyer_id: parseInt(req.params.id),
+    buyer_number: buyer.buyer_number
+  });
   res.json(buyer);
 });
 
 app.post('/clerk/api/buyers/:id/deny', requireAdmin, (req, res) => {
-  db.denyBuyer(parseInt(req.params.id));
+  const buyerId = parseInt(req.params.id);
+  // Emit denial notification before deleting
+  io.to('pending_' + buyerId).emit('account_denied', {
+    buyer_id: buyerId
+  });
+  // Delete the denied account
+  db.deleteBuyer(buyerId);
   res.json({ ok: true });
 });
 
@@ -890,6 +907,13 @@ io.on('connection', (socket) => {
   socket.on('join_buyer', (buyerId) => {
     if (buyerId) {
       socket.join('buyer_' + buyerId);
+    }
+  });
+
+  // Allow pending buyers to join a room for approval/denial notifications
+  socket.on('join_pending', (buyerId) => {
+    if (buyerId) {
+      socket.join('pending_' + buyerId);
     }
   });
 

@@ -45,7 +45,34 @@
   </div>
 </div>
 
-<!-- MAIN BIDDER PORTAL (shown when logged in) -->
+<!-- PENDING APPROVAL LOCK SCREEN -->
+<div id="pending-lock-screen" class="pending-lock-screen hidden">
+  <div class="pending-lock-content">
+    <img src="/logo.webp" alt="Full House Horse Sale" class="pending-lock-logo" />
+    <div class="pending-lock-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    </div>
+    <h2 class="pending-lock-title">Awaiting Approval</h2>
+    <p class="pending-lock-msg">Your registration has been submitted. The clerk is reviewing your account.</p>
+    <p class="pending-lock-hint">Please keep this page open. You will be automatically notified when your account is approved.</p>
+    <div class="pending-lock-spinner"></div>
+  </div>
+</div>
+
+<!-- DENIED SCREEN (shown if account is denied) -->
+<div id="denied-lock-screen" class="pending-lock-screen hidden">
+  <div class="pending-lock-content">
+    <img src="/logo.webp" alt="Full House Horse Sale" class="pending-lock-logo" />
+    <div class="pending-lock-icon denied-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+    </div>
+    <h2 class="pending-lock-title" style="color:#991b1b;">Registration Denied</h2>
+    <p class="pending-lock-msg">Your account registration was not approved. Please contact the auction house for assistance.</p>
+    <a href="/" class="pending-lock-btn">Back to Home</a>
+  </div>
+</div>
+
+<!-- MAIN BIDDER PORTAL (shown when logged in AND approved) -->
 <div id="bidder-portal" class="bidder-portal hidden">
 
   <!-- HEADER -->

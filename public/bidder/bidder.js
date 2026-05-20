@@ -51,18 +51,30 @@ function showViewOnlyMode() {
 function setUser(buyer) {
   currentUser = buyer;
   document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('bidder-portal').classList.remove('hidden');
-
-  document.getElementById('user-name-label').textContent = buyer.full_name;
 
   if (buyer.status === 'approved') {
+    // Show full portal
+    document.getElementById('pending-lock-screen').classList.add('hidden');
+    document.getElementById('denied-lock-screen').classList.add('hidden');
+    document.getElementById('bidder-portal').classList.remove('hidden');
+    document.getElementById('user-name-label').textContent = buyer.full_name;
     document.getElementById('buyer-number-badge').textContent = 'Buyer #' + buyer.buyer_number;
     document.getElementById('buyer-number-badge').classList.remove('hidden');
     updateBidButton();
+    // Join buyer room for private notifications
+    socket.emit('join_buyer', buyer.buyer_number);
   } else if (buyer.status === 'pending') {
-    document.getElementById('pending-banner').classList.remove('hidden');
+    // Show lock screen — user cannot access portal
+    document.getElementById('bidder-portal').classList.add('hidden');
+    document.getElementById('denied-lock-screen').classList.add('hidden');
+    document.getElementById('pending-lock-screen').classList.remove('hidden');
+    // Join a pending room so server can notify when approved
+    socket.emit('join_pending', buyer.id);
   } else if (buyer.status === 'denied') {
-    document.getElementById('denied-banner').classList.remove('hidden');
+    // Show denied screen
+    document.getElementById('bidder-portal').classList.add('hidden');
+    document.getElementById('pending-lock-screen').classList.add('hidden');
+    document.getElementById('denied-lock-screen').classList.remove('hidden');
   }
 }
 
@@ -195,6 +207,34 @@ socket.on('stream_display_toggled', (data) => {
   } else {
     lastStreamUrl = null;
     hideStream();
+  }
+});
+
+// ─── ACCOUNT APPROVAL / DENIAL (real-time from clerk) ─────────────────────
+socket.on('account_approved', (data) => {
+  // Clerk approved this account — unlock the portal
+  if (currentUser && currentUser.id === data.buyer_id) {
+    currentUser.status = 'approved';
+    currentUser.buyer_number = data.buyer_number;
+    document.getElementById('pending-lock-screen').classList.add('hidden');
+    document.getElementById('bidder-portal').classList.remove('hidden');
+    document.getElementById('user-name-label').textContent = currentUser.full_name;
+    document.getElementById('buyer-number-badge').textContent = 'Buyer #' + data.buyer_number;
+    document.getElementById('buyer-number-badge').classList.remove('hidden');
+    updateBidButton();
+    socket.emit('join_buyer', data.buyer_number);
+    // Show approval notification
+    addNotification('Your account has been approved! You are now Buyer #' + data.buyer_number + '. You can place bids.');
+  }
+});
+
+socket.on('account_denied', (data) => {
+  // Clerk denied this account — show denied screen
+  if (currentUser && currentUser.id === data.buyer_id) {
+    currentUser.status = 'denied';
+    document.getElementById('pending-lock-screen').classList.add('hidden');
+    document.getElementById('bidder-portal').classList.add('hidden');
+    document.getElementById('denied-lock-screen').classList.remove('hidden');
   }
 });
 
