@@ -964,6 +964,18 @@
       .price-detail-value { font-size: 0.8rem; }
       .card { padding: 1rem; overflow: hidden; }
     }
+    /* Disabled bid button */
+    .btn-disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+      background: #999 !important;
+      border-color: #888 !important;
+      color: #fff !important;
+    }
+    .btn-disabled:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
   </style>
 </head>
 <body>
@@ -1376,6 +1388,12 @@ function applyState(state) {
   // Lot
   if (state.status === 'active' && state.current_animal) {
     showActiveLot(state);
+  } else if (state.status === 'sold' && (state.current_animal || window._lastHomeAnimal)) {
+    // Keep showing the lot with SOLD over the price
+    showSoldLot(state);
+  } else if (state.status === 'active' && !state.current_animal) {
+    // Between horses - show waiting
+    showWaitingLot();
   } else {
     showIdleLot();
   }
@@ -1388,6 +1406,7 @@ function showIdleLot() {
 
 function showActiveLot(state) {
   const a = state.current_animal;
+  window._lastHomeAnimal = a; // Remember for between-horse state
   document.getElementById('lot-idle').classList.add('hidden');
   document.getElementById('lot-active').classList.remove('hidden');
 
@@ -1432,20 +1451,24 @@ function updateBidButton() {
   if (currentUser) {
     if (currentUser.status === 'approved') {
       btn.disabled = false;
+      btn.classList.remove('btn-disabled');
       btn.textContent = 'Place Bid';
       hint.classList.add('hidden');
     } else if (currentUser.status === 'pending') {
       btn.disabled = true;
+      btn.classList.add('btn-disabled');
       btn.textContent = 'Awaiting Approval';
       hint.classList.add('hidden');
     } else {
       btn.disabled = true;
+      btn.classList.add('btn-disabled');
       btn.textContent = 'Account Denied';
       hint.classList.add('hidden');
     }
   } else {
     btn.disabled = true;
-    btn.textContent = 'Place Bid';
+    btn.classList.add('btn-disabled');
+    btn.textContent = 'Sign In to Bid';
     hint.classList.remove('hidden');
   }
 }
@@ -1494,11 +1517,41 @@ function swapLot(state) {
 
 // ─── SOLD ────────────────────────────────────────────────────────────────────
 function showSold(data) {
+  // Show SOLD banner briefly - don't show who won
   const overlay = document.getElementById('sold-overlay');
   const detail = document.getElementById('sold-detail');
-  detail.textContent = data.name ? data.name + (data.amount ? ' -- $' + Number(data.amount).toLocaleString() : '') : '';
+  const name = data.name || 'Lot';
+  detail.textContent = name + ' — SOLD for $' + Number(data.amount || 0).toLocaleString();
   overlay.classList.add('show');
-  setTimeout(() => overlay.classList.remove('show'), 4000);
+  setTimeout(() => overlay.classList.remove('show'), 5000);
+}
+
+function showSoldLot(state) {
+  const a = state.current_animal || window._lastHomeAnimal;
+  if (!a) { showIdleLot(); return; }
+  document.getElementById('lot-idle').classList.add('hidden');
+  document.getElementById('lot-active').classList.remove('hidden');
+  // Photo
+  const photoWrap = document.getElementById('lot-photo-wrap');
+  const photo = document.getElementById('lot-photo');
+  if (a.photo_path) { photo.src = a.photo_path; photo.alt = a.name; photoWrap.classList.remove('hidden'); }
+  else { photoWrap.classList.add('hidden'); }
+  document.getElementById('lot-name').textContent = a.name;
+  document.getElementById('lot-desc').textContent = a.description || '';
+  document.getElementById('lot-bid').innerHTML = '<span style="background:#b91c1c;color:#fff;padding:0.1em 0.4em;border-radius:4px;font-weight:900;font-size:0.7em;margin-right:0.25em;">SOLD</span> $' + (state.current_bid || 0).toLocaleString();
+  document.getElementById('lot-next').textContent = '\u2014';
+  document.getElementById('lot-bidder').textContent = '\u2014';
+  document.getElementById('home-current-price').innerHTML = '<span style="background:#b91c1c;color:#fff;padding:0.1em 0.4em;border-radius:4px;font-weight:900;font-size:0.7em;margin-right:0.25em;">SOLD</span> $' + (state.current_bid || 0).toLocaleString();
+  document.getElementById('home-next-bid').textContent = '\u2014';
+  document.getElementById('home-high-bidder').textContent = '\u2014';
+  const statusEl = document.getElementById('lot-status');
+  statusEl.textContent = 'Sold'; statusEl.className = 'lot-status sold';
+}
+
+function showWaitingLot() {
+  document.getElementById('lot-idle').classList.remove('hidden');
+  document.getElementById('lot-active').classList.add('hidden');
+  document.getElementById('lot-idle').innerHTML = '<div class="lot-idle-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="24" cy="24" r="18"/><path d="M24 16v8l5 3"/></svg></div><h3>Preparing Next Horse</h3><p>The next lot will be up shortly.</p>';
 }
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────

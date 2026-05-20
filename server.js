@@ -63,7 +63,7 @@ const buyerSessionMiddleware = session({
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    maxAge: 30 * 24 * 60 * 60 * 1000
   }
 });
 
@@ -143,6 +143,25 @@ app.post('/api/login', (req, res) => {
 
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
+});
+
+// ─── FORGOT PASSWORD ─────────────────────────────────────────────────────────
+app.post('/api/forgot-password', (req, res) => {
+  const { email, phone, new_password } = req.body;
+  if (!email || !phone || !new_password) return res.status(400).json({ error: 'Email, phone, and new password are required.' });
+  if (new_password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters.' });
+  const buyer = db.getBuyerByEmail(email);
+  if (!buyer) return res.status(404).json({ error: 'No account found with that email and phone combination.' });
+  // Verify phone matches (normalize by removing non-digits)
+  const normalizePhone = (p) => (p || '').replace(/[^0-9]/g, '');
+  if (normalizePhone(buyer.phone) !== normalizePhone(phone)) {
+    return res.status(404).json({ error: 'No account found with that email and phone combination.' });
+  }
+  // Update password
+  const bcrypt = require('bcryptjs');
+  const hash = bcrypt.hashSync(new_password, 10);
+  db.updateBuyerPassword(buyer.id, hash);
+  res.json({ ok: true, message: 'Password reset successfully. You can now log in with your new password.' });
 });
 
 app.get('/api/me', (req, res) => {
@@ -262,7 +281,7 @@ function buildYoutubeEmbed(url) {
   if (!url) return '';
   const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   if (!m) return '';
-  return `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=1&playsinline=1`;
+  return `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&loop=1&playlist=${m[1]}`;
 }
 
 // Helper: enrich any state object with stream info before emitting
@@ -550,13 +569,20 @@ app.post('/clerk/api/auction/sold', requireAdmin, (req, res) => {
       price: state.current_bid
     });
   }
+  // Emit sold to everyone but WITHOUT revealing who won
   io.emit('sold', {
     animal,
     amount: state.current_bid,
-    bidderNumber: soldToNumber,
-    bidderName: soldToName,
     soldType: sold_type
   });
+
+  // Send winner info only to the winning buyer's private room
+  if (sold_type === 'online' && soldToBuyerId) {
+    io.to('buyer_' + soldToBuyerId).emit('you_won', {
+      animal,
+      amount: state.current_bid
+    });
+  }
   emitState(newState);
   res.json({ ok: true, state: newState, animal });
 });
@@ -858,6 +884,13 @@ io.on('connection', (socket) => {
   socket.on('join', (room) => {
     if (['home', 'bidder', 'display', 'clerk'].includes(room)) {
       socket.join(room);
+    }
+  });
+
+  // Allow buyers to join their own private room for targeted events
+  socket.on('join_buyer', (buyerId) => {
+    if (buyerId) {
+      socket.join('buyer_' + buyerId);
     }
   });
 

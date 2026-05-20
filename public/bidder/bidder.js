@@ -13,6 +13,7 @@ let currentUser = null;
 let currentState = null;
 let bidCount = 0;
 let lotTransitioning = false;
+let lastStreamUrl = null; // Track stream URL independently
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
 async function init() {
@@ -23,15 +24,26 @@ async function init() {
       setUser(data.buyer);
     } else {
       showAuthScreen();
+      // Still show the portal in "view only" mode for non-logged-in users
+      showViewOnlyMode();
     }
   } catch (e) {
     showAuthScreen();
+    showViewOnlyMode();
   }
 }
 
 function showAuthScreen() {
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('bidder-portal').classList.add('hidden');
+}
+
+function showViewOnlyMode() {
+  // Show the portal but with bid button grayed out
+  // Non-logged-in users can still see the sale
+  document.getElementById('bidder-portal').classList.remove('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+  updateBidButton();
 }
 
 function setUser(buyer) {
@@ -53,18 +65,42 @@ function setUser(buyer) {
 }
 
 function updateBidButton() {
-  if (!currentUser || currentUser.status !== 'approved') return;
   const state = currentState;
   const bidArea = document.getElementById('bid-area');
   const btn = document.getElementById('bid-btn');
   const hint = document.getElementById('bid-hint');
 
-  if (!state || state.status !== 'active') {
+  // Always show bid area during active sale
+  if (!state || (state.status !== 'active' && state.status !== 'sold')) {
     bidArea.classList.add('hidden');
     return;
   }
 
   bidArea.classList.remove('hidden');
+
+  // If sold, disable button
+  if (state.status === 'sold') {
+    btn.textContent = 'SOLD';
+    btn.disabled = true;
+    btn.classList.add('btn-disabled');
+    hint.textContent = '';
+    return;
+  }
+
+  // If not logged in or not approved, show grayed out button
+  if (!currentUser || currentUser.status !== 'approved') {
+    const animal = state.current_animal;
+    const inc = animal ? animal.increment : 100;
+    const next = (state.current_bid || 0) + inc;
+    btn.textContent = `Sign In to Bid — $${fmt(next)}`;
+    btn.disabled = true;
+    btn.classList.add('btn-disabled');
+    hint.textContent = 'You must be signed in and approved to place bids.';
+    return;
+  }
+
+  // Active and approved
+  btn.classList.remove('btn-disabled');
   const animal = state.current_animal;
   const inc = animal ? animal.increment : 100;
   const next = (state.current_bid || 0) + inc;
@@ -73,14 +109,9 @@ function updateBidButton() {
   hint.textContent = `Increment: $${fmt(inc)} per bid`;
 }
 
-async function doLogout() {
-  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-  currentUser = null;
-  showAuthScreen();
-}
-
 // ─── BID ──────────────────────────────────────────────────────────────────
 async function placeBid() {
+  if (!currentUser || currentUser.status !== 'approved') return;
   const btn = document.getElementById('bid-btn');
   btn.disabled = true;
   try {
@@ -101,37 +132,24 @@ socket.on('state', (state) => {
   const prev = currentState;
   currentState = state;
 
-  if (state.status === 'active') {
+  if (state.status === 'active' || state.status === 'sold') {
     document.getElementById('live-badge').classList.remove('hidden');
   }
 
-  // Stream
-  const iframe = document.getElementById('stream-iframe');
-  const streamPlaceholder = document.getElementById('stream-placeholder');
-  if (state.youtube_url && state.stream_display_enabled) {
-    if (iframe.src !== state.youtube_url) {
-      iframe.src = state.youtube_url;
-      iframe.classList.remove('hidden');
-      streamPlaceholder.classList.add('hidden');
-    }
-    document.getElementById('stream-badge').textContent = 'Live';
-    document.getElementById('stream-badge').className = 'badge badge-green';
-  } else {
-    iframe.src = '';
-    iframe.classList.add('hidden');
-    streamPlaceholder.classList.remove('hidden');
-    document.getElementById('stream-badge').textContent = 'Waiting';
-    document.getElementById('stream-badge').className = 'badge badge-muted';
-  }
+  // Stream — only update if stream_display_enabled explicitly changed
+  // This prevents the stream from disappearing during lot transitions
+  updateStream(state);
 
   const prevId = prev ? prev.current_animal_id : null;
   if (state.current_animal_id && state.current_animal_id !== prevId && !lotTransitioning) {
     transitionLot(state);
-  } else if (state.current_animal_id) {
+  } else if (state.current_animal_id || state.current_animal) {
     updateLotDisplay(state);
-  } else {
+  } else if (state.status === 'idle' || state.status === 'ended') {
     showIdleLot();
   }
+  // If status is 'sold' or 'waiting' but we have a current_animal, keep showing it
+  // (don't go to idle)
 
   updateBidButton();
 });
@@ -163,23 +181,66 @@ socket.on('sold', (data) => {
   showSold(data);
 });
 
+// Winner-only notification (targeted via socket room, so if we receive it, we won)
+socket.on('you_won', (data) => {
+  showWinnerPopup(data);
+});
+
 socket.on('stream_display_toggled', (data) => {
-  const iframe = document.getElementById('stream-iframe');
-  const streamPlaceholder = document.getElementById('stream-placeholder');
   if (data.stream_display_enabled && data.youtube_url) {
-    iframe.src = data.youtube_url;
-    iframe.classList.remove('hidden');
-    streamPlaceholder.classList.add('hidden');
-    document.getElementById('stream-badge').textContent = 'Live';
-    document.getElementById('stream-badge').className = 'badge badge-green';
+    lastStreamUrl = data.youtube_url;
+    showStream(data.youtube_url);
   } else {
-    iframe.src = '';
-    iframe.classList.add('hidden');
-    streamPlaceholder.classList.remove('hidden');
-    document.getElementById('stream-badge').textContent = 'Waiting';
-    document.getElementById('stream-badge').className = 'badge badge-muted';
+    lastStreamUrl = null;
+    hideStream();
   }
 });
+
+// ─── STREAM MANAGEMENT ───────────────────────────────────────────────────
+function updateStream(state) {
+  if (state.stream_display_enabled && state.youtube_url) {
+    // Only update iframe src if URL actually changed
+    if (state.youtube_url !== lastStreamUrl) {
+      lastStreamUrl = state.youtube_url;
+      showStream(state.youtube_url);
+    } else {
+      // Just make sure it's visible
+      const iframe = document.getElementById('stream-iframe');
+      const streamPlaceholder = document.getElementById('stream-placeholder');
+      iframe.classList.remove('hidden');
+      streamPlaceholder.classList.add('hidden');
+      document.getElementById('stream-badge').textContent = 'Live';
+      document.getElementById('stream-badge').className = 'badge badge-green';
+    }
+  } else if (state.stream_display_enabled === false) {
+    // Only hide if explicitly disabled
+    lastStreamUrl = null;
+    hideStream();
+  }
+  // If stream_display_enabled is undefined/null in the state, don't touch the stream at all
+}
+
+function showStream(url) {
+  const iframe = document.getElementById('stream-iframe');
+  const streamPlaceholder = document.getElementById('stream-placeholder');
+  if (iframe.src !== url) {
+    iframe.src = url;
+  }
+  iframe.classList.remove('hidden');
+  streamPlaceholder.classList.add('hidden');
+  document.getElementById('stream-badge').textContent = 'Live';
+  document.getElementById('stream-badge').className = 'badge badge-green';
+}
+
+function hideStream() {
+  const iframe = document.getElementById('stream-iframe');
+  const streamPlaceholder = document.getElementById('stream-placeholder');
+  iframe.src = '';
+  iframe.classList.add('hidden');
+  streamPlaceholder.classList.remove('hidden');
+  document.getElementById('stream-badge').textContent = 'Waiting';
+  document.getElementById('stream-badge').className = 'badge badge-muted';
+}
 
 // ─── LOT TRANSITION ───────────────────────────────────────────────────────
 function transitionLot(state) {
@@ -204,6 +265,29 @@ function updateLotDisplay(state) {
   const animal = state.current_animal;
   const waitingEl = document.getElementById('lot-waiting');
   
+  // If status is 'sold' and we have an animal, show the lot with SOLD overlay
+  if (state.status === 'sold' && animal) {
+    document.getElementById('lot-idle').classList.add('hidden');
+    document.getElementById('lot-active').classList.remove('hidden');
+    waitingEl.classList.add('hidden');
+    renderAnimalCard(animal, state);
+    // Show SOLD badge on the lot
+    const badge = document.getElementById('lot-badge');
+    badge.textContent = 'Sold';
+    badge.className = 'badge badge-red';
+    // Show SOLD over the price
+    document.getElementById('lot-bid').innerHTML = '<span class="sold-price-label">SOLD</span> $' + fmt(state.current_bid || 0);
+    return;
+  }
+
+  // If status is 'waiting' (between horses) - show "preparing next lot"
+  if ((state.status === 'waiting' || state.status === 'sold') && !animal) {
+    document.getElementById('lot-idle').classList.add('hidden');
+    document.getElementById('lot-active').classList.add('hidden');
+    waitingEl.classList.remove('hidden');
+    return;
+  }
+
   // Handle waiting/between-horses state
   if (!animal && state.status === 'active') {
     document.getElementById('lot-idle').classList.add('hidden');
@@ -217,6 +301,15 @@ function updateLotDisplay(state) {
   document.getElementById('lot-active').classList.remove('hidden');
   waitingEl.classList.add('hidden');
 
+  renderAnimalCard(animal, state);
+
+  const badge = document.getElementById('lot-badge');
+  badge.textContent = 'Active';
+  badge.className = 'badge badge-gold';
+  document.getElementById('lot-bid').textContent = '$' + fmt(state.current_bid || animal.starting_price || 0);
+}
+
+function renderAnimalCard(animal, state) {
   const photoWrap = document.getElementById('lot-photo-wrap');
   const photo = document.getElementById('lot-photo');
   if (animal.photo_path) {
@@ -239,17 +332,11 @@ function updateLotDisplay(state) {
   document.getElementById('lot-desc').textContent = animal.description || '';
 
   const bid = state.current_bid || animal.starting_price || 0;
-  document.getElementById('lot-bid').textContent = '$' + fmt(bid);
-
   const bidder = state.current_bidder_number ? '#' + state.current_bidder_number : '\u2014';
   document.getElementById('lot-bidder').textContent = bidder;
 
   const inc = animal.increment || 100;
   document.getElementById('lot-next').textContent = '$' + fmt(bid + inc);
-
-  const badge = document.getElementById('lot-badge');
-  if (state.status === 'sold') { badge.textContent = 'Sold'; badge.className = 'badge badge-red'; }
-  else { badge.textContent = 'Active'; badge.className = 'badge badge-gold'; }
 }
 
 function showIdleLot() {
@@ -282,21 +369,36 @@ function addFeedItem(bid) {
 
 // ─── SOLD ─────────────────────────────────────────────────────────────────
 function showSold(data) {
-  const overlay = document.getElementById('sold-overlay');
-  const details = document.getElementById('sold-details');
+  // Don't show full-screen overlay. Instead show "SOLD" in the lot card price area.
+  // The state update will handle showing SOLD in the lot card via updateLotDisplay
+  // Just flash a brief notification banner
   const name = data.animal ? data.animal.name : 'Lot';
-  const bidder = data.bidderNumber ? 'Buyer #' + data.bidderNumber : 'In-person buyer';
-  details.textContent = `${name} — $${fmt(data.amount)} — ${bidder}`;
-  overlay.classList.remove('hidden');
-  setTimeout(() => overlay.classList.add('hidden'), 4500);
+  const soldBanner = document.getElementById('sold-banner');
+  if (soldBanner) {
+    soldBanner.querySelector('.sold-banner-text').textContent = `${name} — SOLD for $${fmt(data.amount)}`;
+    soldBanner.classList.remove('hidden');
+    setTimeout(() => soldBanner.classList.add('hidden'), 5000);
+  }
+}
+
+function showWinnerPopup(data) {
+  const name = data.animal ? data.animal.name : 'Lot';
+  document.getElementById('purchase-popup-title').textContent = 'You Won!';
+  document.getElementById('purchase-popup-message').textContent = 'Congratulations! You are the winning bidder.';
+  document.getElementById('purchase-popup-horse').textContent = name;
+  document.getElementById('purchase-popup-price').textContent = '$' + fmt(data.amount || 0);
+  document.getElementById('purchase-popup').classList.remove('hidden');
+  loadNotifications();
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────
 function showAuthTab(tab) {
   document.getElementById('tab-login').classList.toggle('active', tab === 'login');
   document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('tab-forgot').classList.toggle('active', tab === 'forgot');
   document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
   document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('forgot-form').classList.toggle('hidden', tab !== 'forgot');
 }
 
 function showAlert(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); }
@@ -351,6 +453,36 @@ async function submitRegister() {
   } catch (e) {
     showAlert('register-error', 'Network error. Please try again.');
   }
+}
+
+async function submitForgotPassword() {
+  hideAlert('forgot-error');
+  hideAlert('forgot-success');
+  const email = document.getElementById('forgot-email').value.trim();
+  const phone = document.getElementById('forgot-phone').value.trim();
+  const newPass = document.getElementById('forgot-new-password').value;
+  if (!email || !phone || !newPass) return showAlert('forgot-error', 'All fields are required.');
+  if (newPass.length < 4) return showAlert('forgot-error', 'Password must be at least 4 characters.');
+  try {
+    const r = await fetch('/api/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, phone, new_password: newPass })
+    });
+    const data = await r.json();
+    if (!r.ok) return showAlert('forgot-error', data.error || 'Reset failed.');
+    showAlert('forgot-success', data.message || 'Password reset successfully.');
+    // Switch back to login after 2 seconds
+    setTimeout(() => showAuthTab('login'), 2500);
+  } catch (e) {
+    showAlert('forgot-error', 'Network error. Please try again.');
+  }
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  currentUser = null;
+  showAuthScreen();
 }
 
 // ─── NOTIFICATIONS ───────────────────────────────────────────────────────
@@ -427,10 +559,12 @@ socket.on('purchase_notification', (data) => {
   }
 });
 
-// Load notifications on login
+// Load notifications on login + join buyer's private room for winner notifications
 const origSetUser = setUser;
 setUser = function(buyer) {
   origSetUser(buyer);
+  // Join private room for targeted events (like you_won)
+  socket.emit('join_buyer', buyer.id);
   setTimeout(loadNotifications, 500);
 };
 

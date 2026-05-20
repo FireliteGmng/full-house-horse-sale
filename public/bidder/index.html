@@ -17,6 +17,7 @@
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign In</button>
       <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Register</button>
+      <button class="auth-tab" id="tab-forgot" onclick="showAuthTab('forgot')">Forgot?</button>
     </div>
 
     <!-- LOGIN FORM -->
@@ -48,6 +49,18 @@
       </div>
       <button class="btn btn-gold btn-full" onclick="submitRegister()">Submit Registration</button>
       <p class="auth-back"><a href="/">Back to home</a></p>
+    </div>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <div id="forgot-form" class="hidden">
+      <div class="alert alert-error" id="forgot-error"></div>
+      <div class="alert alert-success" id="forgot-success"></div>
+      <p class="forgot-instructions">Enter the email and phone number you used to register, then choose a new password.</p>
+      <div class="field"><label>Email</label><input type="email" id="forgot-email" placeholder="you@example.com" /></div>
+      <div class="field"><label>Phone Number</label><input type="tel" id="forgot-phone" placeholder="555-000-0000" /></div>
+      <div class="field"><label>New Password</label><input type="password" id="forgot-new-password" placeholder="Choose a new password" onkeydown="if(event.key==='Enter')submitForgotPassword()" /></div>
+      <button class="btn btn-gold btn-full" onclick="submitForgotPassword()">Reset Password</button>
+      <p class="auth-back"><a href="#" onclick="showAuthTab('login');return false;">Back to Sign In</a></p>
     </div>
   </div>
 </div>
@@ -83,6 +96,12 @@
     Your account registration was not approved. Please contact the auction house for assistance.
   </div>
 
+  <!-- SOLD BANNER (brief notification, not full-screen overlay) -->
+  <div class="sold-banner hidden" id="sold-banner">
+    <span class="sold-banner-icon">SOLD</span>
+    <span class="sold-banner-text"></span>
+  </div>
+
   <!-- PORTAL BODY -->
   <div class="portal-body">
 
@@ -100,7 +119,7 @@
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="4" y="8" width="40" height="28" rx="3"/><path d="M16 44h16M24 36v8"/><path d="M20 20l10 4-10 4V20z" fill="currentColor" stroke="none"/></svg>
             <p>Stream will appear here when the sale begins</p>
           </div>
-          <iframe id="stream-iframe" class="stream-iframe hidden" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+          <iframe id="stream-iframe" class="stream-iframe hidden" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" style="pointer-events:none;"></iframe>
         </div>
       </div>
 
@@ -148,15 +167,15 @@
           <div class="lot-idle-icon">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><circle cx="24" cy="24" r="18"/><path d="M24 16v8l5 3"/></svg>
           </div>
-          <h3>Waiting for Next Horse</h3>
-          <p>The clerk is preparing the next lot. Please stand by.</p>
+          <h3>Preparing Next Horse</h3>
+          <p>The clerk is getting the next lot ready. Please stand by.</p>
         </div>
       </div>
 
       <!-- Bid Button -->
-      <div id="bid-area" class="bid-area hidden">
-        <button class="btn btn-gold btn-lg w-full bid-btn" id="bid-btn" onclick="placeBid()">Place Bid</button>
-        <p class="bid-hint" id="bid-hint"></p>
+      <div id="bid-area" class="bid-area">
+        <button class="btn btn-gold btn-lg w-full bid-btn btn-disabled" id="bid-btn" onclick="placeBid()" disabled>Place Bid</button>
+        <p class="bid-hint" id="bid-hint">Sign in to place bids.</p>
       </div>
 
     </div>
@@ -206,11 +225,6 @@
     </div>
     <button class="btn btn-primary" onclick="closePurchasePopup()">OK</button>
   </div>
-</div>
-<!-- SOLD OVERLAY -->
-<div class="sold-overlay hidden" id="sold-overlay">
-  <div class="sold-text">SOLD</div>
-  <div class="sold-details" id="sold-details"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>

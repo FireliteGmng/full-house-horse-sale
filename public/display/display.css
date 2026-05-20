@@ -76,7 +76,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
   content: ''; position: absolute; inset: 5px;
   border: 1px solid var(--border); border-radius: 16px; pointer-events: none;
 }
-.lot-photo { width: 100%; height: 100%; object-fit: cover; }
+.lot-photo { width: 100%; height: 100%; object-fit: contain; background: var(--warm-50); }
 .lot-photo-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--border); }
 .lot-name-block { text-align: center; max-width: 100%; overflow: hidden; }
 .lot-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
@@ -202,3 +202,33 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
   .display-logo span { font-size: 0.75rem; }
   .status-pill { font-size: 0.55rem; padding: 0.15rem 0.4rem; }
 }
+
+/* ─── SOLD INLINE ─── */
+.sold-inline {
+  display: inline-block;
+  background: var(--red-700);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.6em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15em 0.5em;
+  border-radius: 6px;
+  margin-right: 0.25em;
+  vertical-align: middle;
+  animation: soldPulse 1s ease-in-out 3;
+}
+@keyframes soldPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* ─── BOARD WAITING ─── */
+.board-waiting {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; text-align: center; padding: 2rem;
+}
+.board-waiting h2 { font-family: var(--font-display); font-size: 1.5rem; color: var(--text); }
+.board-waiting p { color: var(--muted); font-size: 1rem; }
+.board-waiting .idle-icon { color: var(--muted); opacity: 0.5; }

@@ -311,7 +311,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 640px) {
   .lot-active { grid-template-columns: 1fr; }
   .lot-photo-wrap { width: 100%; }
-  .lot-photo { width: 100%; height: 180px; }
+  .lot-photo { width: 100%; height: auto; max-height: 250px; object-fit: contain; }
   .lot-bid-row { gap: 0.75rem; }
   .lot-bid-block { max-width: 100%; }
   .bid-amount { font-size: 1.2rem; }
@@ -361,3 +361,84 @@ a { color: inherit; text-decoration: none; }
 .purchase-popup-details { margin: 1rem 0; padding: 1rem; background: #f5f5f5; border-radius: 8px; }
 .purchase-horse { display: block; font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; }
 .purchase-price { display: block; font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+
+/* ─── SOLD BANNER (brief notification) ─── */
+.sold-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--red-700);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 9000;
+  box-shadow: 0 4px 20px rgba(185,28,28,0.3);
+  animation: slideDown 0.3s ease-out;
+  font-weight: 600;
+  max-width: 90vw;
+}
+.sold-banner-icon {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  background: rgba(255,255,255,0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+.sold-banner-text {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes slideDown {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* ─── SOLD PRICE LABEL (inline in lot card) ─── */
+.sold-price-label {
+  display: inline-block;
+  background: var(--red-700);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.7em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  margin-right: 0.25em;
+  vertical-align: middle;
+}
+
+/* ─── DISABLED BID BUTTON ─── */
+.btn-disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background: #999 !important;
+  border-color: #888 !important;
+  color: #fff !important;
+}
+.btn-disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ─── FORGOT PASSWORD ─── */
+.forgot-instructions {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ─── STREAM IFRAME (un-pauseable) ─── */
+.stream-iframe {
+  pointer-events: none;
+}

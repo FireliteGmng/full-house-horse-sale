@@ -10,12 +10,15 @@ const socket = io({
 socket.on('connect', () => { socket.emit('join', 'display'); });
 
 let flashTimer = null;
+let lastAnimal = null; // Keep track of last shown animal for between-horse state
 
 socket.on('state', (state) => {
+  window._lastState = state;
   applyState(state);
 });
 
 socket.on('lot_change', ({ state }) => {
+  window._lastState = state;
   applyState(state);
 });
 
@@ -27,9 +30,9 @@ socket.on('bid', (bid) => {
   void amountEl.offsetWidth;
   amountEl.classList.add('bump');
 
-  // Update bidder
+  // Update bidder - don't show buyer number to public, just show "Online" or "In-person"
   if (bid.bidType === 'online') {
-    document.getElementById('bidder-value').textContent = 'Buyer #' + bid.bidderNumber;
+    document.getElementById('bidder-value').textContent = 'Online Bidder';
     flashOnlineBid(bid);
   } else {
     document.getElementById('bidder-value').textContent = 'In-person';
@@ -55,17 +58,58 @@ function applyState(state) {
   else if (state.status === 'sold') { pill.textContent = 'Sold'; pill.className = 'status-pill sold'; }
   else { pill.textContent = 'Waiting'; pill.className = 'status-pill'; }
 
-  if (!state.current_animal_id || !state.current_animal) {
+  const animal = state.current_animal;
+
+  // If we have an animal, remember it
+  if (animal) {
+    lastAnimal = animal;
+  }
+
+  // If sold and we have animal info, show SOLD over the price
+  if (state.status === 'sold' && (animal || lastAnimal)) {
+    const displayAnimal = animal || lastAnimal;
+    document.getElementById('board-idle').classList.add('hidden');
+    document.getElementById('board-active').classList.remove('hidden');
+    renderAnimal(displayAnimal);
+    // Show SOLD over the price
+    document.getElementById('bid-amount').innerHTML = '<span class="sold-inline">SOLD</span> $' + fmt(state.current_bid || 0);
+    document.getElementById('bidder-value').textContent = '\u2014';
+    document.getElementById('next-value').textContent = '\u2014';
+    return;
+  }
+
+  // Between horses - no current animal but sale is active
+  if (!state.current_animal_id || !animal) {
+    if (state.status === 'active' || state.status === 'waiting') {
+      // Keep showing "Preparing Next Horse" instead of idle
+      document.getElementById('board-idle').classList.add('hidden');
+      document.getElementById('board-active').classList.add('hidden');
+      document.getElementById('board-waiting').classList.remove('hidden');
+      return;
+    }
+    // Truly idle (no sale running)
     document.getElementById('board-idle').classList.remove('hidden');
     document.getElementById('board-active').classList.add('hidden');
+    document.getElementById('board-waiting').classList.add('hidden');
     return;
   }
 
   document.getElementById('board-idle').classList.add('hidden');
   document.getElementById('board-active').classList.remove('hidden');
+  document.getElementById('board-waiting').classList.add('hidden');
 
-  const animal = state.current_animal;
+  renderAnimal(animal);
 
+  const bid = state.current_bid || animal.starting_price || 0;
+  document.getElementById('bid-amount').textContent = '$' + fmt(bid);
+
+  const bidder = state.current_bidder_number ? 'Buyer #' + state.current_bidder_number : '\u2014';
+  document.getElementById('bidder-value').textContent = bidder;
+
+  updateNextBid(bid, animal.increment);
+}
+
+function renderAnimal(animal) {
   // Photo
   const photo = document.getElementById('lot-photo');
   const placeholder = document.getElementById('lot-photo-placeholder');
@@ -87,18 +131,9 @@ function applyState(state) {
   if (animal.sex) detailParts.push(animal.sex);
   const detailEl = document.getElementById('lot-details');
   if (detailEl) detailEl.textContent = detailParts.join(' \u2022 ');
-
-  const bid = state.current_bid || animal.starting_price || 0;
-  document.getElementById('bid-amount').textContent = '$' + fmt(bid);
-
-  const bidder = state.current_bidder_number ? 'Buyer #' + state.current_bidder_number : '—';
-  document.getElementById('bidder-value').textContent = bidder;
-
-  updateNextBid(bid, animal.increment);
 }
 
 function updateNextBid(currentBid, increment) {
-  // Try to get increment from current state
   const state = window._lastState;
   const inc = increment || (state && state.current_animal ? state.current_animal.increment : 100);
   document.getElementById('next-value').textContent = '$' + fmt(currentBid + inc);
@@ -107,7 +142,7 @@ function updateNextBid(currentBid, increment) {
 function flashOnlineBid(bid) {
   const banner = document.getElementById('bid-flash-banner');
   document.getElementById('flash-amount').textContent = '$' + fmt(bid.amount);
-  document.getElementById('flash-bidder').textContent = 'Buyer #' + bid.bidderNumber;
+  document.getElementById('flash-bidder').textContent = 'Online Bidder';
 
   banner.classList.remove('hidden');
 
@@ -118,17 +153,18 @@ function flashOnlineBid(bid) {
 }
 
 function showSold(data) {
+  // Show SOLD over the price area instead of full-screen overlay
+  const name = data.animal ? data.animal.name : 'Lot';
+  const amountEl = document.getElementById('bid-amount');
+  amountEl.innerHTML = '<span class="sold-inline">SOLD</span> $' + fmt(data.amount);
+  
+  // Also show a brief banner at the top
   const overlay = document.getElementById('sold-overlay');
   const sub = document.getElementById('sold-sub');
-  const name = data.animal ? data.animal.name : 'Lot';
-  const bidder = data.bidderNumber ? 'Buyer #' + data.bidderNumber : 'In-person buyer';
-  sub.textContent = `${name}  —  $${fmt(data.amount)}  —  ${bidder}`;
+  sub.textContent = `${name}  \u2014  SOLD for $${fmt(data.amount)}`;
   overlay.classList.remove('hidden');
   setTimeout(() => overlay.classList.add('hidden'), 5000);
 }
-
-// Store state for increment reference
-socket.on('state', (state) => { window._lastState = state; });
 
 function fmt(n) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 function formatDate(d) { if (!d) return ''; const [y,m,day] = d.split('-'); return `${m}/${day}/${y}`; }

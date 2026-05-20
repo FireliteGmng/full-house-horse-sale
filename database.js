@@ -175,6 +175,10 @@ function verifyBuyer(email, password) {
   return buyer;
 }
 
+function updateBuyerPassword(id, hashedPassword) {
+  db.prepare('UPDATE buyers SET password = ? WHERE id = ?').run(hashedPassword, id);
+}
+
 // ─── SALES ──────────────────────────────────────────────────────────────────
 function createSale(data) {
   const stmt = db.prepare(`
@@ -566,7 +570,7 @@ function getUnreadCount(buyerId) {
 module.exports = {
   db,
   registerBuyer, getBuyerByEmail, getBuyerById, getAllBuyers,
-  approveBuyer, denyBuyer, verifyBuyer,
+  approveBuyer, denyBuyer, verifyBuyer, updateBuyerPassword,
   createSale, getSaleById, getAllSales, updateSale, deleteSale, goLive, endSale,
   getAnimals, getAnimalById, addAnimal, updateAnimal, deleteAnimal, reorderAnimals,
   markAnimalSold, skipAnimal, resetAnimalStatus,
