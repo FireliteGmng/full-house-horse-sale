@@ -513,3 +513,24 @@ body.is-dragging .animal-item { transition: transform 0.25s ease; }
 .buyer-item-name.clickable-buyer:hover {
   color: #1e40af;
 }
+
+/* ─── STREAM DISPLAY TOGGLE ─── */
+.stream-display-toggle {
+  border: 1.5px solid #ccc;
+  background: #f5f5f5;
+  color: #666;
+  font-weight: 600;
+  transition: all 0.2s;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+}
+.stream-display-toggle.toggle-on {
+  background: #dcfce7;
+  border-color: rgba(22,163,74,0.4);
+  color: #16a34a;
+}
+.stream-display-toggle.toggle-off {
+  background: #fee2e2;
+  border-color: rgba(220,38,38,0.3);
+  color: #dc2626;
+}

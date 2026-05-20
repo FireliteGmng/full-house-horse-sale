@@ -63,6 +63,7 @@ function backToDashboard() {
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 async function loadDashboard() {
   await loadYoutubeUrl();
+  await loadStreamDisplayState();
   await loadSales();
   await loadBuyers();
   await loadRoster();
@@ -128,10 +129,49 @@ function updateYoutubePreview(url) {
   if (!url) { preview.classList.add('hidden'); return; }
   const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   if (m) {
-    iframe.src = 'https://www.youtube.com/embed/' + m[1] + '?autoplay=0';
+    iframe.src = 'https://www.youtube.com/embed/' + m[1] + '?autoplay=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3';
     preview.classList.remove('hidden');
   } else {
     preview.classList.add('hidden');
+  }
+}
+
+// ─── STREAM DISPLAY TOGGLE ───────────────────────────────────────────────────
+let streamDisplayEnabled = false;
+
+async function loadStreamDisplayState() {
+  try {
+    const res = await fetch('/clerk/api/settings/stream-display', { credentials: 'include' });
+    const data = await res.json();
+    streamDisplayEnabled = data.stream_display_enabled;
+    updateStreamToggleUI();
+  } catch (e) {}
+}
+
+async function toggleStreamDisplay() {
+  streamDisplayEnabled = !streamDisplayEnabled;
+  await fetch('/clerk/api/settings/stream-display', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ enabled: streamDisplayEnabled })
+  });
+  updateStreamToggleUI();
+}
+
+function updateStreamToggleUI() {
+  const btn = document.getElementById('stream-display-toggle');
+  const label = document.getElementById('stream-toggle-label');
+  const icon = document.getElementById('stream-toggle-icon');
+  if (!btn) return;
+  if (streamDisplayEnabled) {
+    label.textContent = 'ON';
+    btn.classList.add('toggle-on');
+    btn.classList.remove('toggle-off');
+  } else {
+    label.textContent = 'OFF';
+    btn.classList.remove('toggle-on');
+    btn.classList.add('toggle-off');
   }
 }
 

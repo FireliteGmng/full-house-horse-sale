@@ -152,8 +152,11 @@ app.get('/api/me', (req, res) => {
 // ─── PUBLIC AUCTION API ───────────────────────────────────────────────────────
 app.get('/api/state', (req, res) => {
   const state = db.getSaleState();
-  // Include global youtube_url from settings
-  state.youtube_url = db.getSetting('youtube_url') || null;
+  // Include global youtube embed URL and display toggle
+  const rawUrl = db.getSetting('youtube_url') || '';
+  const displayEnabled = db.getSetting('stream_display_enabled') === '1';
+  state.youtube_url = displayEnabled ? buildYoutubeEmbed(rawUrl) : null;
+  state.stream_display_enabled = displayEnabled;
   res.json(state);
 });
 
@@ -228,9 +231,35 @@ app.get('/clerk/api/settings/youtube', requireAdmin, (req, res) => {
 app.post('/clerk/api/settings/youtube', requireAdmin, (req, res) => {
   const { youtube_url } = req.body;
   db.setSetting('youtube_url', youtube_url || '');
-  io.emit('youtube_updated', { youtube_url: youtube_url || '' });
+  // Build embed URL for clients
+  const embedUrl = buildYoutubeEmbed(youtube_url || '');
+  const displayEnabled = db.getSetting('stream_display_enabled') === '1';
+  io.emit('youtube_updated', { youtube_url: embedUrl, stream_display_enabled: displayEnabled });
   res.json({ ok: true, youtube_url: youtube_url || '' });
 });
+
+// Toggle stream display on/off
+app.post('/clerk/api/settings/stream-display', requireAdmin, (req, res) => {
+  const { enabled } = req.body;
+  db.setSetting('stream_display_enabled', enabled ? '1' : '0');
+  const youtubeUrl = db.getSetting('youtube_url') || '';
+  const embedUrl = buildYoutubeEmbed(youtubeUrl);
+  io.emit('stream_display_toggled', { stream_display_enabled: !!enabled, youtube_url: embedUrl });
+  res.json({ ok: true, stream_display_enabled: !!enabled });
+});
+
+app.get('/clerk/api/settings/stream-display', requireAdmin, (req, res) => {
+  const enabled = db.getSetting('stream_display_enabled') === '1';
+  res.json({ stream_display_enabled: enabled });
+});
+
+// Helper: convert YouTube watch URL to embed URL with autoplay and no branding
+function buildYoutubeEmbed(url) {
+  if (!url) return '';
+  const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (!m) return '';
+  return `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=1&playsinline=1`;
+}
 
 // ─── CLERK: SALES CRUD ──────────────────────────────────────────────────────
 app.get('/clerk/api/sales', requireAdmin, (req, res) => {
