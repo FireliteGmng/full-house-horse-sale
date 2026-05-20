@@ -36,6 +36,10 @@ async function init() {
 function showAuthScreen() {
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('bidder-portal').classList.add('hidden');
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.style.height = '100%';
 }
 
 function showViewOnlyMode() {
@@ -50,6 +54,10 @@ function setUser(buyer) {
   currentUser = buyer;
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('bidder-portal').classList.remove('hidden');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.height = '';
 
   document.getElementById('user-name-label').textContent = buyer.full_name;
 

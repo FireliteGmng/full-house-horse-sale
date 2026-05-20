@@ -126,6 +126,8 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(180deg, var(--warm-50) 0%, #fff 100%);
   overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 .auth-card {
   padding: 1.5rem; width: 100%; max-width: 480px;
