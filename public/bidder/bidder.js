@@ -36,11 +36,8 @@ async function init() {
 function showAuthScreen() {
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('bidder-portal').classList.add('hidden');
-  // Let the body scroll naturally so the auth card is scrollable on iOS
-  document.body.style.overflow = '';
-  document.body.style.position = '';
-  document.body.style.width = '';
-  document.body.style.height = '';
+  // Scroll to top so user sees the form from the beginning
+  window.scrollTo(0, 0);
 }
 
 function showViewOnlyMode() {
