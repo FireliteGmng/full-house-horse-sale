@@ -1615,7 +1615,7 @@ function closeModal(id) {
 });
 ['nav-register-btn', 'hero-register-btn', 'idle-register-btn', 'hint-register', 'how-register-btn'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('click', () => openModal('register-modal'));
+  if (el) el.addEventListener('click', () => { window.location.href = '/bidder/register'; });
 });
 
 // Close triggers
@@ -1626,7 +1626,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 // Switch
-document.getElementById('switch-to-reg').addEventListener('click', () => { closeModal('login-modal'); openModal('register-modal'); });
+document.getElementById('switch-to-reg').addEventListener('click', () => { window.location.href = '/bidder/register'; });
 document.getElementById('switch-to-login').addEventListener('click', () => { closeModal('register-modal'); openModal('login-modal'); });
 
 // Login submit
