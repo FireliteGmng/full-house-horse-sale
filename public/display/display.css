@@ -18,34 +18,38 @@
 html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; color: var(--text); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
 
 .display-root {
-  width: 100vw; height: 100vh; display: flex; flex-direction: column;
+  width: 100vw; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
   position: relative; z-index: 1;
   background: linear-gradient(180deg, var(--warm-50) 0%, #fff 50%, var(--warm-50) 100%);
 }
 
 /* ─── HEADER ─── */
 .display-header {
-  height: 64px; background: #fff;
+  height: 56px; background: #fff;
   border-bottom: 2px solid var(--border-2);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 2rem; flex-shrink: 0;
+  padding: 0 1rem; flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.display-logo { display: flex; align-items: center; gap: 0.75rem; }
-.display-logo img { height: 48px; width: auto; }
-.display-logo span { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--text); }
-.display-header-right { display: flex; align-items: center; gap: 1rem; }
-.sale-date-label { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+.display-logo { display: flex; align-items: center; gap: 0.5rem; }
+.display-logo img { height: 40px; width: auto; }
+.display-logo span { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); }
+.display-header-right { display: flex; align-items: center; gap: 0.75rem; }
+.sale-date-label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
 .status-pill {
-  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 0.25rem 0.75rem; border-radius: 100px;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.2rem 0.6rem; border-radius: 100px;
   background: var(--warm-100); border: 1.5px solid var(--border); color: var(--muted);
 }
 .status-pill.active { background: var(--success-bg); border-color: rgba(22,163,74,0.3); color: var(--success); }
 .status-pill.sold { background: var(--red-100); border-color: rgba(185,28,28,0.3); color: var(--accent); }
 
 /* ─── BOARD ─── */
-.board { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; overflow: hidden; }
+.board {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 1rem; overflow: auto; min-height: 0;
+}
 
 /* IDLE */
 .board-idle { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1.25rem; color: var(--muted); }
@@ -54,10 +58,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
 .board-idle p { font-size: 1rem; color: var(--muted); }
 
 /* ACTIVE */
-.board-active { width: 100%; max-width: 1400px; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+.board-active {
+  width: 100%; max-width: 1400px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 2rem; align-items: center;
+}
 
 /* LEFT */
-.lot-left { display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
+.lot-left { display: flex; flex-direction: column; gap: 1rem; align-items: center; min-width: 0; }
 .lot-photo-container {
   width: 100%; max-width: 500px; aspect-ratio: 4/3;
   border-radius: var(--radius-xl); overflow: hidden;
@@ -70,17 +78,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
 }
 .lot-photo { width: 100%; height: 100%; object-fit: cover; }
 .lot-photo-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--border); }
-.lot-name-block { text-align: center; }
-.lot-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
-.lot-name { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900; color: var(--text); line-height: 1.1; }
+.lot-name-block { text-align: center; max-width: 100%; overflow: hidden; }
+.lot-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+.lot-name { font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 3.5rem); font-weight: 900; color: var(--text); line-height: 1.1; word-break: break-word; overflow-wrap: break-word; }
 
 /* RIGHT */
 .lot-right {
-  display: flex; flex-direction: column; gap: 2.5rem;
-  padding: 2.5rem; background: #fff;
+  display: flex; flex-direction: column; gap: 1.5rem;
+  padding: 1.5rem; background: #fff;
   border: 3px solid var(--border-2); border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg); position: relative;
-  overflow: hidden; min-width: 0;
+  overflow: hidden; min-width: 0; width: 100%;
 }
 .lot-right::before {
   content: ''; position: absolute; inset: 5px;
@@ -95,36 +103,53 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
   border-bottom: 3px solid var(--border-2);
   border-radius: 0 0 24px 24px;
 }
-.bid-block, .bidder-block, .next-block { text-align: center; overflow: hidden; min-width: 0; padding: 0 0.5rem; }
-.bid-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; white-space: nowrap; }
+.bid-block, .bidder-block, .next-block {
+  text-align: center; overflow: hidden; min-width: 0;
+  padding: 0 0.25rem; width: 100%;
+}
+.bid-label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 0.25rem; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
 .bid-amount {
-  font-family: var(--font-body); font-size: clamp(2.5rem, 6vw, 7rem);
+  font-family: var(--font-body); font-size: clamp(1.8rem, 5vw, 7rem);
   font-weight: 900; line-height: 1.1; color: var(--accent);
   transition: all 0.3s;
-  word-break: break-word; overflow-wrap: break-word;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   max-width: 100%;
 }
 .bid-amount.bump { animation: bumpUp 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 @keyframes bumpUp { 0%{transform:scale(1)} 50%{transform:scale(1.06)} 100%{transform:scale(1)} }
-.bidder-value { font-family: var(--font-body); font-size: clamp(1.5rem, 3.5vw, 3rem); font-weight: 800; color: var(--text); word-break: break-word; overflow-wrap: break-word; max-width: 100%; }
-.next-value { font-family: var(--font-body); font-size: clamp(1rem, 2.5vw, 2rem); font-weight: 700; color: var(--muted); word-break: break-word; overflow-wrap: break-word; max-width: 100%; }
+.bidder-value {
+  font-family: var(--font-body); font-size: clamp(1.2rem, 3vw, 3rem);
+  font-weight: 800; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%;
+}
+.next-value {
+  font-family: var(--font-body); font-size: clamp(1rem, 2.5vw, 2rem);
+  font-weight: 700; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%;
+}
 
 /* ─── ONLINE BID FLASH BANNER ─── */
 .bid-flash-banner {
-  position: fixed; top: 64px; left: 0; right: 0; z-index: 200;
+  position: fixed; top: 56px; left: 0; right: 0; z-index: 200;
   display: flex; align-items: center; justify-content: center; pointer-events: none;
 }
 .bid-flash-banner.hidden { display: none; }
 .flash-inner {
-  display: flex; align-items: center; gap: 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
   background: var(--success-bg); border: 2px solid rgba(22,163,74,0.3);
   border-top: none; border-radius: 0 0 16px 16px;
-  padding: 0.75rem 2.5rem; animation: flashIn 0.3s ease;
+  padding: 0.5rem 1.5rem; animation: flashIn 0.3s ease;
 }
 @keyframes flashIn { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
-.flash-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--success); }
-.flash-amount { font-family: var(--font-body); font-size: 1.75rem; font-weight: 900; color: var(--success); }
-.flash-bidder { font-size: 1rem; font-weight: 600; color: rgba(22,163,74,0.8); }
+.flash-label { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--success); }
+.flash-amount { font-family: var(--font-body); font-size: 1.5rem; font-weight: 900; color: var(--success); }
+.flash-bidder { font-size: 0.9rem; font-weight: 600; color: rgba(22,163,74,0.8); }
 
 /* ─── SOLD OVERLAY ─── */
 .sold-overlay {
@@ -135,7 +160,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
 }
 .sold-overlay.hidden { display: none; }
 .sold-text {
-  font-family: var(--font-display); font-size: clamp(8rem, 20vw, 16rem);
+  font-family: var(--font-display); font-size: clamp(5rem, 18vw, 16rem);
   font-weight: 900; line-height: 1; color: #fff;
   text-shadow: 0 4px 40px rgba(0,0,0,0.3);
   animation: soldPulse 0.5s ease-in-out 4;
@@ -143,7 +168,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
 }
 @keyframes soldPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 .sold-sub {
-  font-family: var(--font-display); font-size: clamp(1.25rem, 3vw, 2.5rem);
+  font-family: var(--font-display); font-size: clamp(1rem, 3vw, 2.5rem);
   color: rgba(255,255,255,0.85); margin-top: 1rem; text-align: center;
 }
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
@@ -152,9 +177,28 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; colo
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 900px) {
-  .board-active { grid-template-columns: 1fr; gap: 1.5rem; }
-  .lot-right { gap: 1.5rem; padding: 1.5rem; }
-  .bid-amount { font-size: clamp(2rem, 8vw, 4rem); }
-  .bidder-value { font-size: clamp(1.25rem, 4vw, 2rem); }
-  .next-value { font-size: clamp(1rem, 3vw, 1.5rem); }
+  .board-active { grid-template-columns: 1fr; gap: 1rem; }
+  .board { padding: 0.75rem; overflow-y: auto; align-items: flex-start; }
+  .lot-right { gap: 1rem; padding: 1.25rem; }
+  .lot-photo-container { max-width: 300px; }
+  .bid-amount { font-size: clamp(1.8rem, 8vw, 3.5rem); }
+  .bidder-value { font-size: clamp(1.1rem, 4vw, 1.8rem); }
+  .next-value { font-size: clamp(0.9rem, 3vw, 1.4rem); }
+  .display-header { height: 48px; padding: 0 0.75rem; }
+  .display-logo img { height: 32px; }
+  .display-logo span { font-size: 0.85rem; }
+}
+@media (max-width: 480px) {
+  .board { padding: 0.5rem; }
+  .lot-right { gap: 0.75rem; padding: 1rem; }
+  .lot-photo-container { max-width: 220px; aspect-ratio: 3/2; }
+  .bid-amount { font-size: clamp(1.5rem, 10vw, 2.5rem); }
+  .bidder-value { font-size: clamp(1rem, 5vw, 1.5rem); }
+  .next-value { font-size: clamp(0.85rem, 4vw, 1.2rem); }
+  .bid-label { font-size: 0.6rem; }
+  .lot-name { font-size: clamp(1.2rem, 5vw, 2rem); }
+  .display-header { height: 44px; }
+  .display-logo img { height: 28px; }
+  .display-logo span { font-size: 0.75rem; }
+  .status-pill { font-size: 0.55rem; padding: 0.15rem 0.4rem; }
 }

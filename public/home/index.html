@@ -624,13 +624,13 @@
     /* ─── HOW TO BID CARD ──────────────────────────────────────────────────── */
     
     /* Current Price Card */
-    .current-price-display { text-align: center; padding: 1.5rem 0; }
-    .current-price-amount { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: var(--red); }
+    .current-price-display { text-align: center; padding: 1.5rem 0; overflow: hidden; }
+    .current-price-amount { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 6vw, 2.5rem); font-weight: 700; color: var(--red); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
     .current-price-label { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
-    .current-price-details { border-top: 1px solid #eee; padding-top: 1rem; }
-    .price-detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f5f5f5; }
-    .price-detail-label { color: #666; font-size: 0.9rem; }
-    .price-detail-value { font-weight: 600; font-size: 0.9rem; }
+    .current-price-details { border-top: 1px solid #eee; padding-top: 1rem; overflow: hidden; }
+    .price-detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f5f5f5; gap: 0.5rem; min-width: 0; overflow: hidden; }
+    .price-detail-label { color: #666; font-size: 0.9rem; white-space: nowrap; flex-shrink: 0; }
+    .price-detail-value { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
     .how-title {
       font-family: 'Lora', serif;
@@ -958,6 +958,11 @@
       .lot-numbers { grid-template-columns: 1fr 1fr; }
       .field-row { grid-template-columns: 1fr; }
       .nav-name { display: none; }
+      .stream-viewport { min-height: 180px; }
+      .current-price-amount { font-size: 1.5rem; }
+      .price-detail-label { font-size: 0.8rem; }
+      .price-detail-value { font-size: 0.8rem; }
+      .card { padding: 1rem; overflow: hidden; }
     }
   </style>
 </head>
@@ -1282,7 +1287,13 @@ let socket = null;
 
 // ─── SOCKET ────────────────────────────────────────────────────────────────
 function initSocket() {
-  socket = io({ transports: ['websocket', 'polling'] });
+  socket = io({
+    transports: ['polling', 'websocket'],
+    upgrade: true,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000
+  });
 
   socket.on('connect', () => {
     socket.emit('join', 'public');
@@ -1396,11 +1407,11 @@ function showActiveLot(state) {
   document.getElementById('lot-bid').textContent = '$' + (state.current_bid || 0).toLocaleString();
   const next = (state.current_bid || 0) + (a.increment || 100);
   document.getElementById('lot-next').textContent = '$' + next.toLocaleString();
-  document.getElementById('lot-bidder').textContent = state.high_bidder_number ? '#' + state.high_bidder_number : '--';
+  document.getElementById('lot-bidder').textContent = state.current_bidder_number ? '#' + state.current_bidder_number : '--';
   // Update current price card
   document.getElementById('home-current-price').textContent = '$' + (state.current_bid || 0).toLocaleString();
   document.getElementById('home-next-bid').textContent = '$' + next.toLocaleString();
-  document.getElementById('home-high-bidder').textContent = state.high_bidder_number ? '#' + state.high_bidder_number : '\u2014';
+  document.getElementById('home-high-bidder').textContent = state.current_bidder_number ? '#' + state.current_bidder_number : '\u2014';
 
   const statusEl = document.getElementById('lot-status');
   if (state.lot_status === 'sold') {

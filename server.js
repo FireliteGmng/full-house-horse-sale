@@ -16,7 +16,11 @@ const db = require('./database');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  transports: ['websocket', 'polling'],
+  allowUpgrades: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 const PORT = process.env.PORT || 3000;
@@ -203,7 +207,7 @@ app.post('/api/bid', requireBuyer, (req, res) => {
     animalId: state.current_animal_id
   });
 
-  io.emit('state', result);
+  emitState(result);
   res.json({ ok: true, state: result });
 });
 
@@ -261,6 +265,21 @@ function buildYoutubeEmbed(url) {
   return `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=1&playsinline=1`;
 }
 
+// Helper: enrich any state object with stream info before emitting
+function enrichState(state) {
+  if (!state) return state;
+  const rawUrl = db.getSetting('youtube_url') || '';
+  const displayEnabled = db.getSetting('stream_display_enabled') === '1';
+  state.youtube_url = displayEnabled ? buildYoutubeEmbed(rawUrl) : null;
+  state.stream_display_enabled = displayEnabled;
+  return state;
+}
+
+// Emit enriched state to all clients
+function emitState(state) {
+  io.emit('state', enrichState(state));
+}
+
 // ─── CLERK: SALES CRUD ──────────────────────────────────────────────────────
 app.get('/clerk/api/sales', requireAdmin, (req, res) => {
   res.json(db.getAllSales());
@@ -295,17 +314,17 @@ app.post('/clerk/api/sales/:id/golive', requireAdmin, (req, res) => {
   }
   
   const state = db.goLive(id);
-  io.emit('sale_live', { sale: db.getSaleById(id), state });
-  io.emit('state', state);
+  io.emit('sale_live', { sale: db.getSaleById(id), state: enrichState(state) });
+  emitState(state);
   res.json({ ok: true, state });
 });
 
-// End Sale
+// End a sale
 app.post('/clerk/api/sales/:id/end', requireAdmin, (req, res) => {
   const { timer_seconds } = req.body;
   const state = db.endSale(parseInt(req.params.id), timer_seconds || 0);
   io.emit('sale_ended', { saleId: parseInt(req.params.id) });
-  io.emit('state', state);
+  emitState(state);
   res.json({ ok: true, state });
 });
 
@@ -325,11 +344,12 @@ app.post('/clerk/api/sales/:id/continue', requireAdmin, (req, res) => {
   db.updateSale(id, { status: 'live', ended_at: null });
   sessionDb.prepare("UPDATE sale_state SET active_sale_id = ?, status = 'live', current_animal_id = NULL, current_bid = NULL, current_bidder_id = NULL, current_bidder_number = NULL, current_bidder_name = NULL, updated_at = datetime('now') WHERE id = 1").run(id);
   const state = db.getSaleState();
-  io.emit('sale_live', { sale: db.getSaleById(id), state });
-  io.emit('state', state);
+  io.emit('sale_live', { sale: db.getSaleById(id), state: enrichState(state) });
+  emitState(state);
   res.json({ ok: true, state });
 });
-// Re-run sale (go live again with same sale)
+
+// ─── CLERK: ANIMALS (go live again with same sale)
 app.post('/clerk/api/sales/:id/rerun', requireAdmin, (req, res) => {
   const id = parseInt(req.params.id);
   // Reset all animals to pending
@@ -387,7 +407,7 @@ app.put('/clerk/api/animals/:id', requireAdmin, upload.single('photo'), (req, re
   // If this is the current lot, push updated state to all
   const state = db.getSaleState();
   if (state.current_animal_id === id) {
-    io.emit('state', db.getSaleState());
+    emitState(db.getSaleState());
   }
 
   res.json(animal);
@@ -437,8 +457,8 @@ app.post('/clerk/api/auction/next', requireAdmin, (req, res) => {
   }
   
   const finalState = db.getSaleState();
-  io.emit('lot_change', { state: finalState, direction: 'next' });
-  io.emit('state', finalState);
+  io.emit('lot_change', { state: enrichState(finalState), direction: 'next' });
+  emitState(finalState);
   res.json({ ok: true, state: finalState });
 });
 
@@ -450,7 +470,7 @@ app.post('/clerk/api/auction/set-increment', requireAdmin, (req, res) => {
   
   db.updateAnimal(state.current_animal_id, { increment: parseFloat(increment) || 100 });
   const newState = db.getSaleState();
-  io.emit('state', newState);
+  emitState(newState);
   res.json({ ok: true, state: newState });
 });
 
@@ -473,7 +493,7 @@ app.post('/clerk/api/auction/inperson', requireAdmin, (req, res) => {
     bidType: 'inperson',
     animalId: state.current_animal_id
   });
-  io.emit('state', result);
+  emitState(result);
   res.json({ ok: true, state: result });
 });
 
@@ -537,7 +557,7 @@ app.post('/clerk/api/auction/sold', requireAdmin, (req, res) => {
     bidderName: soldToName,
     soldType: sold_type
   });
-  io.emit('state', newState);
+  emitState(newState);
   res.json({ ok: true, state: newState, animal });
 });
 
@@ -578,7 +598,7 @@ app.post('/clerk/api/auction/rollback', requireAdmin, (req, res) => {
 
   const newState = db.getSaleState();
   io.emit('bid_rollback', { animalId: state.current_animal_id, state: newState });
-  io.emit('state', newState);
+  emitState(newState);
   res.json({ ok: true, state: newState });
 });
 
@@ -615,7 +635,7 @@ app.post('/clerk/api/auction/skip', requireAdmin, (req, res) => {
   const newState = db.getSaleState();
 
   io.emit('animal_skipped', { animalId: state.current_animal_id });
-  io.emit('state', newState);
+  emitState(newState);
   res.json({ ok: true, state: newState });
 });
 
@@ -627,8 +647,8 @@ app.post('/clerk/api/auction/goback', requireAdmin, (req, res) => {
   const newState = db.goToAnimal(parseInt(animal_id));
   if (!newState) return res.status(400).json({ error: 'Animal not found.' });
 
-  io.emit('lot_change', { state: newState, direction: 'back' });
-  io.emit('state', newState);
+  io.emit('lot_change', { state: enrichState(newState), direction: 'back' });
+  emitState(newState);
   res.json({ ok: true, state: newState });
 });
 
@@ -841,8 +861,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Send current state on connect
-  socket.emit('state', db.getSaleState());
+  // Send current state on connect (include stream info)
+  socket.emit('state', enrichState(db.getSaleState()));
 
   socket.on('disconnect', () => {});
 });

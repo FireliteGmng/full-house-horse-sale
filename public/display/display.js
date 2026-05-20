@@ -1,7 +1,13 @@
 'use strict';
 
-const socket = io({ transports: ['websocket', 'polling'] });
-socket.emit('join', 'display');
+const socket = io({
+  transports: ['polling', 'websocket'],
+  upgrade: true,
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000
+});
+socket.on('connect', () => { socket.emit('join', 'display'); });
 
 let flashTimer = null;
 

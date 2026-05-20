@@ -8,8 +8,14 @@ let buyers = [];
 let saleState = null;
 let timerInterval = null;
 let timerSeconds = 0;
-const socket = io({ transports: ['websocket', 'polling'] });
-socket.emit('join', 'clerk');
+const socket = io({
+  transports: ['polling', 'websocket'],
+  upgrade: true,
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000
+});
+socket.on('connect', () => { socket.emit('join', 'clerk'); });
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
