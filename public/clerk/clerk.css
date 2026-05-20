@@ -329,3 +329,187 @@ body.is-dragging .animal-item { transition: transform 0.25s ease; }
 .increment-presets { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
 .increment-preset-btn { flex: 1; padding: 0.75rem; font-size: 1rem; font-weight: 600; }
 .increment-preset-btn.selected { background: var(--red); color: white; border-color: var(--red); }
+
+/* ─── ROLLBACK BUTTON ─── */
+.btn-rollback {
+  background: #dc2626 !important;
+  color: #fff !important;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-rollback:hover {
+  background: #b91c1c !important;
+}
+
+/* ─── BID AUDIT TRAIL ─── */
+.bid-audit-trail {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1rem;
+}
+.audit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.audit-header h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.audit-trail-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-warm);
+}
+.audit-trail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.8rem;
+}
+.audit-trail-item:last-child {
+  border-bottom: none;
+}
+.audit-trail-item .audit-num {
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 24px;
+}
+.audit-trail-item .audit-amount {
+  font-weight: 700;
+  color: var(--text);
+  min-width: 80px;
+}
+.audit-trail-item .audit-type {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.audit-type.online {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.audit-type.inperson {
+  background: #fef3c7;
+  color: #92400e;
+}
+.audit-trail-item .audit-bidder {
+  flex: 1;
+  color: var(--text-muted);
+}
+.audit-trail-item .audit-bidder .clickable-buyer {
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.audit-trail-item .audit-bidder .clickable-buyer:hover {
+  color: #1e40af;
+}
+.audit-trail-item .audit-time {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+/* ─── BUYER DETAIL MODAL ─── */
+.modal-lg {
+  max-width: 550px;
+  width: 95%;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.modal-close:hover {
+  color: var(--text);
+}
+.buyer-detail-content {
+  margin-bottom: 1rem;
+}
+.buyer-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.buyer-detail-field {
+  padding: 0.5rem;
+  background: var(--bg-warm);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+}
+.buyer-detail-field label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.buyer-detail-field span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.buyer-detail-field.full-width {
+  grid-column: 1 / -1;
+}
+
+/* ─── CLICKABLE HIGH BIDDER ─── */
+#live-high-bidder.clickable {
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
+}
+#live-high-bidder.clickable:hover {
+  color: #1e40af;
+}
+
+/* ─── INLINE INCREMENT EDIT ─── */
+.increment-inline-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.increment-inline-edit input {
+  width: 80px;
+  padding: 3px 6px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.increment-inline-edit button {
+  padding: 3px 8px;
+  font-size: 0.7rem;
+}
+
+/* ─── CLICKABLE BUYER NAME IN LISTS ─── */
+.buyer-item-name.clickable-buyer {
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.buyer-item-name.clickable-buyer:hover {
+  color: #1e40af;
+}

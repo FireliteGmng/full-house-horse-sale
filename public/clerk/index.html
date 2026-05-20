@@ -221,7 +221,10 @@
             <div class="bid-box">
               <label>Increment</label>
               <span id="live-increment">—</span>
-              <button class="btn btn-sm btn-outline" id="btn-change-increment" onclick="openChangeIncrementModal()" style="margin-top:6px;font-size:0.75rem;padding:4px 10px;">Change</button>
+              <div class="increment-inline-edit" id="increment-inline-edit">
+                <input type="number" id="inline-increment-input" min="1" step="25" placeholder="$">
+                <button class="btn btn-sm btn-primary" onclick="applyInlineIncrement()">Set</button>
+              </div>
             </div>
           </div>
         </div>
@@ -229,9 +232,21 @@
         <!-- Action buttons -->
         <div class="live-actions">
           <button class="btn btn-primary" id="btn-inperson" onclick="clerkInPersonBid()">In-Person Bid +</button>
+          <button class="btn btn-danger btn-rollback" id="btn-rollback" onclick="clerkRollbackBid()" title="Undo last bid / decrease price">↓ Rollback</button>
           <button class="btn btn-success" id="btn-mark-sold" onclick="openSoldModal()">Mark as Sold</button>
           <button class="btn btn-warning" id="btn-skip" onclick="confirmSkip()">Skip Horse</button>
           <button class="btn btn-outline" id="btn-next-animal" onclick="openIncrementModal()">Next Animal →</button>
+        </div>
+
+        <!-- Bid Audit Trail -->
+        <div class="bid-audit-trail" id="bid-audit-trail">
+          <div class="audit-header">
+            <h4>Bid History</h4>
+            <button class="btn btn-outline btn-xs" onclick="refreshAuditTrail()">Refresh</button>
+          </div>
+          <div id="audit-trail-list" class="audit-trail-list">
+            <div class="list-empty">No bids yet for this horse.</div>
+          </div>
         </div>
 
         <!-- Online bid alert -->
@@ -419,6 +434,22 @@
       <div class="modal-actions">
         <button class="btn btn-outline" onclick="cancelReorder()">No</button>
         <button class="btn btn-primary" onclick="confirmReorder()">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buyer Detail Modal -->
+  <div class="modal-overlay" id="buyer-detail-modal">
+    <div class="modal western-box modal-lg">
+      <div class="modal-header">
+        <h3>Buyer Details</h3>
+        <button class="modal-close" onclick="closeBuyerDetailModal()">&times;</button>
+      </div>
+      <div id="buyer-detail-content" class="buyer-detail-content">
+        <p>Loading...</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeBuyerDetailModal()">Close</button>
       </div>
     </div>
   </div>

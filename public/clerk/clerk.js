@@ -155,7 +155,7 @@ function renderBuyers(filter) {
   list.innerHTML = filtered.map(b => `
     <div class="buyer-item">
       <div class="buyer-item-info">
-        <span class="buyer-item-name">${esc(b.full_name)}</span>
+        <span class="buyer-item-name clickable-buyer" onclick="openBuyerDetailById(${b.id})">${esc(b.full_name)}</span>
         <span class="buyer-item-detail">${esc(b.email || '')} ${b.buyer_number ? '• #' + b.buyer_number : ''}</span>
       </div>
       <div class="buyer-item-actions">
@@ -594,6 +594,7 @@ async function loadLiveState() {
   const res = await fetch('/clerk/api/state', { credentials: 'include' });
   saleState = await res.json();
   updateLiveDisplay();
+  refreshAuditTrail();
 }
 
 async function loadLiveLineup() {
@@ -610,12 +611,13 @@ function updateLiveDisplay() {
     waiting.classList.remove('hidden');
     display.classList.add('hidden');
     document.getElementById('btn-inperson').style.display = 'none';
+    document.getElementById('btn-rollback').style.display = 'none';
     document.getElementById('btn-mark-sold').style.display = 'none';
     document.getElementById('btn-skip').style.display = 'none';
-    document.getElementById('btn-change-increment').style.display = 'none';
     document.getElementById('btn-next-animal').style.display = '';
     document.getElementById('btn-next-animal').disabled = false;
     document.getElementById('btn-next-animal').textContent = 'Start First Horse →';
+    document.getElementById('increment-inline-edit').style.display = 'none';
     return;
   }
   
@@ -637,15 +639,32 @@ function updateLiveDisplay() {
   }
   
   document.getElementById('live-current-bid').textContent = '$' + fmt(saleState.current_bid || a.starting_price || 0);
-  document.getElementById('live-high-bidder').textContent = saleState.current_bidder_name || (saleState.current_bidder_number ? '#' + saleState.current_bidder_number : '—');
+  
+  // High bidder - make clickable if it's an online bidder
+  const highBidderEl = document.getElementById('live-high-bidder');
+  if (saleState.current_bidder_id) {
+    highBidderEl.textContent = saleState.current_bidder_name || (saleState.current_bidder_number ? '#' + saleState.current_bidder_number : '—');
+    highBidderEl.classList.add('clickable');
+    highBidderEl.onclick = () => openBuyerDetailById(saleState.current_bidder_id);
+  } else if (saleState.current_bidder_name) {
+    highBidderEl.textContent = saleState.current_bidder_name;
+    highBidderEl.classList.remove('clickable');
+    highBidderEl.onclick = null;
+  } else {
+    highBidderEl.textContent = '—';
+    highBidderEl.classList.remove('clickable');
+    highBidderEl.onclick = null;
+  }
+  
   document.getElementById('live-increment').textContent = (a && a.increment) ? '$' + fmt(a.increment) : (saleState.increment ? '$' + fmt(saleState.increment) : '—');
   
   // Button states
   const isSoldOrWaiting = saleState.status === 'sold' || saleState.status === 'waiting' || (saleState.current_animal && (saleState.current_animal.status === 'sold' || saleState.current_animal.status === 'skipped'));
   document.getElementById('btn-inperson').style.display = isSoldOrWaiting ? 'none' : '';
+  document.getElementById('btn-rollback').style.display = isSoldOrWaiting ? 'none' : '';
   document.getElementById('btn-mark-sold').style.display = isSoldOrWaiting ? 'none' : '';
   document.getElementById('btn-skip').style.display = isSoldOrWaiting ? 'none' : '';
-  document.getElementById('btn-change-increment').style.display = isSoldOrWaiting ? 'none' : '';
+  document.getElementById('increment-inline-edit').style.display = isSoldOrWaiting ? 'none' : 'inline-flex';
   document.getElementById('btn-next-animal').style.display = '';
   document.getElementById('btn-next-animal').textContent = 'Next Animal →';
   document.getElementById('btn-next-animal').disabled = !isSoldOrWaiting;
@@ -682,9 +701,141 @@ async function clerkInPersonBid() {
   const data = await res.json();
   if (data.ok) {
     await loadLiveState();
+    refreshAuditTrail();
   }
   btn.disabled = false;
   btn.textContent = 'In-Person Bid +';
+}
+
+// ─── ROLLBACK BID ───────────────────────────────────────────────────────────
+async function clerkRollbackBid() {
+  const btn = document.getElementById('btn-rollback');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Rolling back...';
+  try {
+    const res = await fetch('/clerk/api/auction/rollback', { method: 'POST', credentials: 'include' });
+    const data = await res.json();
+    if (data.ok) {
+      saleState = data.state;
+      updateLiveDisplay();
+      refreshAuditTrail();
+    } else {
+      alert(data.error || 'Cannot rollback.');
+    }
+  } catch(e) {
+    alert('Error rolling back bid.');
+  }
+  btn.disabled = false;
+  btn.textContent = '\u2193 Rollback';
+}
+
+// ─── BID AUDIT TRAIL ────────────────────────────────────────────────────────
+async function refreshAuditTrail() {
+  if (!saleState || !saleState.current_animal_id) return;
+  try {
+    const res = await fetch(`/clerk/api/auction/bids/${saleState.current_animal_id}`, { credentials: 'include' });
+    const bids = await res.json();
+    renderAuditTrail(bids);
+  } catch(e) {
+    console.error('Failed to load audit trail', e);
+  }
+}
+
+function renderAuditTrail(bids) {
+  const list = document.getElementById('audit-trail-list');
+  if (!bids || !bids.length) {
+    list.innerHTML = '<div class="list-empty" style="padding:0.75rem;font-size:0.8rem;">No bids yet for this horse.</div>';
+    return;
+  }
+  list.innerHTML = bids.map((b, i) => {
+    const typeClass = b.bid_type === 'online' ? 'online' : 'inperson';
+    const typeLabel = b.bid_type === 'online' ? 'Online' : 'In-Person';
+    const bidderDisplay = b.bid_type === 'online' && b.buyer_number
+      ? `<span class="clickable-buyer" onclick="openBuyerDetailByNumber('${b.buyer_number}')">${esc(b.full_name || '')} #${b.buyer_number}</span>`
+      : (b.bid_type === 'inperson' ? 'Floor Bidder' : (b.full_name || 'Unknown'));
+    const time = b.created_at ? new Date(b.created_at + 'Z').toLocaleTimeString() : '';
+    return `<div class="audit-trail-item">
+      <span class="audit-num">${i + 1}</span>
+      <span class="audit-amount">$${fmt(b.amount)}</span>
+      <span class="audit-type ${typeClass}">${typeLabel}</span>
+      <span class="audit-bidder">${bidderDisplay}</span>
+      <span class="audit-time">${time}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── BUYER DETAIL MODAL ─────────────────────────────────────────────────────
+async function openBuyerDetailById(buyerId) {
+  document.getElementById('buyer-detail-modal').classList.add('open');
+  document.getElementById('buyer-detail-content').innerHTML = '<p>Loading...</p>';
+  try {
+    const res = await fetch(`/clerk/api/buyers/${buyerId}/details`, { credentials: 'include' });
+    if (!res.ok) { document.getElementById('buyer-detail-content').innerHTML = '<p>Buyer not found.</p>'; return; }
+    const buyer = await res.json();
+    renderBuyerDetail(buyer);
+  } catch(e) {
+    document.getElementById('buyer-detail-content').innerHTML = '<p>Error loading buyer details.</p>';
+  }
+}
+
+async function openBuyerDetailByNumber(number) {
+  document.getElementById('buyer-detail-modal').classList.add('open');
+  document.getElementById('buyer-detail-content').innerHTML = '<p>Loading...</p>';
+  try {
+    const res = await fetch(`/clerk/api/buyers/number/${number}`, { credentials: 'include' });
+    if (!res.ok) { document.getElementById('buyer-detail-content').innerHTML = '<p>Buyer not found.</p>'; return; }
+    const buyer = await res.json();
+    renderBuyerDetail(buyer);
+  } catch(e) {
+    document.getElementById('buyer-detail-content').innerHTML = '<p>Error loading buyer details.</p>';
+  }
+}
+
+function renderBuyerDetail(buyer) {
+  document.getElementById('buyer-detail-content').innerHTML = `
+    <div class="buyer-detail-grid">
+      <div class="buyer-detail-field"><label>Buyer Number</label><span>${buyer.buyer_number || 'Not assigned'}</span></div>
+      <div class="buyer-detail-field"><label>Status</label><span>${buyer.status || 'N/A'}</span></div>
+      <div class="buyer-detail-field full-width"><label>Full Name</label><span>${esc(buyer.full_name || 'N/A')}</span></div>
+      <div class="buyer-detail-field"><label>Email</label><span>${esc(buyer.email || 'N/A')}</span></div>
+      <div class="buyer-detail-field"><label>Phone</label><span>${esc(buyer.phone || 'N/A')}</span></div>
+      <div class="buyer-detail-field full-width"><label>Address</label><span>${esc(buyer.address || 'N/A')}</span></div>
+      <div class="buyer-detail-field"><label>Bank Name</label><span>${esc(buyer.bank_name || 'N/A')}</span></div>
+      <div class="buyer-detail-field"><label>Bank Phone</label><span>${esc(buyer.bank_phone || 'N/A')}</span></div>
+      <div class="buyer-detail-field full-width"><label>Loan Officer</label><span>${esc(buyer.loan_officer || 'N/A')}</span></div>
+      <div class="buyer-detail-field"><label>Registered</label><span>${buyer.created_at || 'N/A'}</span></div>
+    </div>
+  `;
+}
+
+function closeBuyerDetailModal() {
+  document.getElementById('buyer-detail-modal').classList.remove('open');
+}
+
+// ─── INLINE INCREMENT EDIT ──────────────────────────────────────────────────
+async function applyInlineIncrement() {
+  const input = document.getElementById('inline-increment-input');
+  const val = parseFloat(input.value);
+  if (!val || val <= 0) { alert('Enter a valid increment amount.'); return; }
+  try {
+    const res = await fetch('/clerk/api/auction/set-increment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ increment: val })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      saleState = data.state;
+      updateLiveDisplay();
+      input.value = '';
+    } else {
+      alert(data.error || 'Failed to change increment.');
+    }
+  } catch(e) {
+    alert('Error changing increment.');
+  }
 }
 
 function openSoldModal() {
@@ -987,17 +1138,20 @@ socket.on('state', (state) => {
 });
 
 socket.on('bid', (data) => {
-  if (data.bidType === 'online' && document.getElementById('live-sale-screen').classList.contains('active')) {
-    const alertEl = document.getElementById('online-bid-alert');
-    document.getElementById('online-bid-text').textContent = `Online bid: $${fmt(data.amount)} from ${data.bidderName || '#' + data.bidderNumber}`;
-    alertEl.classList.remove('hidden');
-    setTimeout(() => alertEl.classList.add('hidden'), 4000);
+  if (document.getElementById('live-sale-screen').classList.contains('active')) {
+    if (data.bidType === 'online') {
+      const alertEl = document.getElementById('online-bid-alert');
+      document.getElementById('online-bid-text').textContent = `Online bid: $${fmt(data.amount)} from ${data.bidderName || '#' + data.bidderNumber}`;
+      alertEl.classList.remove('hidden');
+      setTimeout(() => alertEl.classList.add('hidden'), 4000);
+    }
     // Update bid display
     if (saleState) {
       saleState.current_bid = data.amount;
       saleState.current_bidder_name = data.bidderName;
       saleState.current_bidder_number = data.bidderNumber;
       updateLiveDisplay();
+      refreshAuditTrail();
     }
   }
 });

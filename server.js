@@ -512,6 +512,70 @@ app.post('/clerk/api/auction/sold', requireAdmin, (req, res) => {
   res.json({ ok: true, state: newState, animal });
 });
 
+// Rollback bid (decrease by one increment / undo last bid)
+app.post('/clerk/api/auction/rollback', requireAdmin, (req, res) => {
+  const state = db.getSaleState();
+  if (!state || state.status !== 'active') return res.status(400).json({ error: 'No active auction.' });
+  if (!state.current_animal_id) return res.status(400).json({ error: 'No active lot.' });
+
+  const animal = db.getAnimalById(state.current_animal_id);
+  
+  // Delete the last bid
+  const deleted = db.deleteLastBid(state.current_animal_id);
+  if (!deleted) {
+    return res.status(400).json({ error: 'No bids to rollback.' });
+  }
+
+  // Get the new last bid (the previous one)
+  const prevBid = db.getLastBidForAnimal(state.current_animal_id);
+  
+  if (prevBid) {
+    // Roll back to the previous bid
+    db.setSaleState({
+      current_bid: prevBid.amount,
+      current_bidder_id: prevBid.buyer_id || null,
+      current_bidder_number: prevBid.buyer_number || null,
+      current_bidder_name: prevBid.full_name || (prevBid.bid_type === 'inperson' ? 'In-Person' : null)
+    });
+  } else {
+    // No more bids — reset to starting price
+    db.setSaleState({
+      current_bid: animal.starting_price || 0,
+      current_bidder_id: null,
+      current_bidder_number: null,
+      current_bidder_name: null
+    });
+  }
+
+  const newState = db.getSaleState();
+  io.emit('bid_rollback', { animalId: state.current_animal_id, state: newState });
+  io.emit('state', newState);
+  res.json({ ok: true, state: newState });
+});
+
+// Get bid audit trail for a specific animal
+app.get('/clerk/api/auction/bids/:animalId', requireAdmin, (req, res) => {
+  const animalId = parseInt(req.params.animalId);
+  const bids = db.getBidAuditTrail(animalId);
+  res.json(bids);
+});
+
+// Get full buyer details by ID
+app.get('/clerk/api/buyers/:id/details', requireAdmin, (req, res) => {
+  const buyer = db.getBuyerById(parseInt(req.params.id));
+  if (!buyer) return res.status(404).json({ error: 'Buyer not found' });
+  const { password: _, ...safe } = buyer;
+  res.json(safe);
+});
+
+// Get buyer details by buyer_number
+app.get('/clerk/api/buyers/number/:number', requireAdmin, (req, res) => {
+  const allBuyers = db.getAllBuyers();
+  const buyer = allBuyers.find(b => String(b.buyer_number) === req.params.number);
+  if (!buyer) return res.status(404).json({ error: 'Buyer not found' });
+  res.json(buyer);
+});
+
 // Skip animal
 app.post('/clerk/api/auction/skip', requireAdmin, (req, res) => {
   const state = db.getSaleState();

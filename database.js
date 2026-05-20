@@ -329,6 +329,35 @@ function getBidsForAnimal(animalId) {
   `).all(animalId);
 }
 
+function getLastBidForAnimal(animalId) {
+  return db.prepare(`
+    SELECT b.*, bu.full_name, bu.buyer_number
+    FROM bids b
+    LEFT JOIN buyers bu ON b.buyer_id = bu.id
+    WHERE b.animal_id = ?
+    ORDER BY b.id DESC
+    LIMIT 1
+  `).get(animalId);
+}
+
+function deleteLastBid(animalId) {
+  const lastBid = db.prepare('SELECT id FROM bids WHERE animal_id = ? ORDER BY id DESC LIMIT 1').get(animalId);
+  if (lastBid) {
+    db.prepare('DELETE FROM bids WHERE id = ?').run(lastBid.id);
+  }
+  return lastBid;
+}
+
+function getBidAuditTrail(animalId) {
+  return db.prepare(`
+    SELECT b.id, b.amount, b.bid_type, b.created_at, bu.full_name, bu.buyer_number
+    FROM bids b
+    LEFT JOIN buyers bu ON b.buyer_id = bu.id
+    WHERE b.animal_id = ?
+    ORDER BY b.id ASC
+  `).all(animalId);
+}
+
 // ─── SALE STATE ──────────────────────────────────────────────────────────────
 function getSaleState() {
   const state = db.prepare('SELECT * FROM sale_state WHERE id = 1').get();
@@ -541,7 +570,7 @@ module.exports = {
   createSale, getSaleById, getAllSales, updateSale, deleteSale, goLive, endSale,
   getAnimals, getAnimalById, addAnimal, updateAnimal, deleteAnimal, reorderAnimals,
   markAnimalSold, skipAnimal, resetAnimalStatus,
-  addBid, getBidsForAnimal,
+  addBid, getBidsForAnimal, getLastBidForAnimal, deleteLastBid, getBidAuditTrail,
   getSaleState, setSaleState, startNextAnimal, goToAnimal, placeBid,
   getSaleAnimalsForExport, getSaleBuyers,
   getSetting, setSetting,
