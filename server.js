@@ -115,6 +115,7 @@ function requireAdmin(req, res, next) {
 // ─── PAGE ROUTES ─────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'home', 'index.html')));
 app.get('/bidder', (req, res) => res.sendFile(path.join(__dirname, 'public', 'bidder', 'index.html')));
+app.get('/bidder/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'bidder', 'register.html')));
 app.get('/display', (req, res) => res.sendFile(path.join(__dirname, 'public', 'display', 'index.html')));
 app.get('/clerk', (req, res) => res.sendFile(path.join(__dirname, 'public', 'clerk', 'index.html')));
 

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — Full House Horse Sale</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      background: #fffbf7;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #1a1a1a;
+      /* CRITICAL: normal document flow, body scrolls naturally */
+    }
+    .page-wrapper {
+      width: 100%;
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    .logo {
+      display: block;
+      width: 90px;
+      height: auto;
+      margin: 0 auto 16px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #3b2012;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #8a7a6a;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #fff;
+      border: 2px solid #c4a882;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .alert {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .alert-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    .alert-success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+    .alert.show { display: block; }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8a7a6a;
+      margin-bottom: 4px;
+    }
+    .field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #d4c4b0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #fffbf7;
+      color: #1a1a1a;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: #b91c1c;
+      box-shadow: 0 0 0 3px rgba(185,28,28,0.1);
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 400px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+    .divider {
+      height: 1px;
+      background: #d4c4b0;
+      margin: 16px 0;
+    }
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8a7a6a;
+      margin-bottom: 10px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #b91c1c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .btn:hover { background: #991b1b; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #8a7a6a;
+    }
+    .back-link a {
+      color: #b91c1c;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .back-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  <img src="/logo.webp" alt="Full House Horse Sale" class="logo" />
+  <h1>Create Account</h1>
+  <p class="subtitle">Register to bid in the auction</p>
+
+  <div class="card">
+    <div class="alert alert-error" id="reg-error"></div>
+    <div class="alert alert-success" id="reg-success"></div>
+
+    <div class="field">
+      <label>Full Name (optional)</label>
+      <input type="text" id="reg-name" placeholder="John Smith" autocomplete="name" />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="tel" id="reg-phone" placeholder="555-000-0000" autocomplete="tel" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Password *</label>
+      <input type="password" id="reg-password" placeholder="Choose a password" autocomplete="new-password" />
+    </div>
+
+    <div class="field">
+      <label>Address</label>
+      <input type="text" id="reg-address" placeholder="123 Main St, City, State" autocomplete="street-address" />
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">Banking Information</p>
+
+    <div class="field">
+      <label>Bank Name</label>
+      <input type="text" id="reg-bank-name" placeholder="First National Bank" />
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Bank Phone</label>
+        <input type="tel" id="reg-bank-phone" placeholder="555-000-0000" />
+      </div>
+      <div class="field">
+        <label>Loan Officer</label>
+        <input type="text" id="reg-loan-officer" placeholder="Jane Doe" />
+      </div>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submitRegister()">Submit Registration</button>
+  </div>
+
+  <p class="back-link">Already have an account? <a href="/bidder">Sign In</a></p>
+</div>
+
+<script>
+function showError(msg) {
+  const el = document.getElementById('reg-error');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('reg-success').classList.remove('show');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('reg-success');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('reg-error').classList.remove('show');
+}
+
+async function submitRegister() {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  document.getElementById('reg-error').classList.remove('show');
+  document.getElementById('reg-success').classList.remove('show');
+
+  const fields = {
+    full_name: document.getElementById('reg-name').value.trim(),
+    email: document.getElementById('reg-email').value.trim(),
+    password: document.getElementById('reg-password').value,
+    phone: document.getElementById('reg-phone').value.trim(),
+    address: document.getElementById('reg-address').value.trim(),
+    bank_name: document.getElementById('reg-bank-name').value.trim(),
+    bank_phone: document.getElementById('reg-bank-phone').value.trim(),
+    loan_officer: document.getElementById('reg-loan-officer').value.trim()
+  };
+
+  if (!fields.email || !fields.password) {
+    showError('Email and password are required.');
+    btn.disabled = false;
+    btn.textContent = 'Submit Registration';
+    return;
+  }
+
+  try {
+    const r = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(fields)
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showError(data.error || 'Registration failed.');
+      btn.disabled = false;
+      btn.textContent = 'Submit Registration';
+      return;
+    }
+    showSuccess('Registration submitted! The clerk will review and approve your account shortly. Redirecting to sign in...');
+    btn.textContent = 'Success!';
+    setTimeout(() => { window.location.href = '/bidder'; }, 2500);
+  } catch (e) {
+    showError('Network error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Submit Registration';
+  }
+}
+</script>
+
+</body>
+</html>

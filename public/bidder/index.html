@@ -16,7 +16,7 @@
     </div>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Sign In</button>
-      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Register</button>
+      <a href="/bidder/register" class="auth-tab" id="tab-register" style="text-decoration:none;">Register</a>
       <button class="auth-tab" id="tab-forgot" onclick="showAuthTab('forgot')">Forgot?</button>
     </div>
 
@@ -29,27 +29,7 @@
       <p class="auth-back"><a href="/">Back to home</a></p>
     </div>
 
-    <!-- REGISTER FORM -->
-    <div id="register-form" class="hidden">
-      <div class="alert alert-error" id="register-error"></div>
-      <div class="alert alert-success" id="register-success"></div>
-      <div class="field"><label>Full Name (optional)</label><input type="text" id="reg-name" placeholder="John Smith" /></div>
-      <div class="field-row">
-        <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com" /></div>
-        <div class="field"><label>Phone</label><input type="tel" id="reg-phone" placeholder="555-000-0000" /></div>
-      </div>
-      <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Choose a password" /></div>
-      <div class="field"><label>Address</label><input type="text" id="reg-address" placeholder="123 Main St, City, State" /></div>
-      <div class="divider"></div>
-      <p class="section-label-sm">Banking Information</p>
-      <div class="field"><label>Bank Name</label><input type="text" id="reg-bank-name" placeholder="First National Bank" /></div>
-      <div class="field-row">
-        <div class="field"><label>Bank Phone</label><input type="tel" id="reg-bank-phone" placeholder="555-000-0000" /></div>
-        <div class="field"><label>Loan Officer</label><input type="text" id="reg-loan-officer" placeholder="Jane Doe" /></div>
-      </div>
-      <button class="btn btn-gold btn-full" onclick="submitRegister()">Submit Registration</button>
-      <p class="auth-back"><a href="/">Back to home</a></p>
-    </div>
+    <!-- REGISTER FORM: moved to standalone page /bidder/register for iOS scroll compatibility -->
 
     <!-- FORGOT PASSWORD FORM -->
     <div id="forgot-form" class="hidden">
