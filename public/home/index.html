@@ -404,6 +404,9 @@
       box-shadow: var(--shadow);
       overflow: hidden;
     }
+    #price-card {
+      overflow: visible;
+    }
     .card::before {
       content: '';
       position: absolute;
@@ -627,7 +630,7 @@
     .current-price-display { text-align: center; padding: 1.5rem 0; overflow: hidden; }
     .current-price-amount { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 6vw, 2.5rem); font-weight: 700; color: var(--red); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
     .current-price-label { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
-    .current-price-details { border-top: 1px solid #eee; padding-top: 1rem; overflow: hidden; }
+    .current-price-details { border-top: 1px solid #eee; padding: 1rem 1.25rem; overflow: visible; }
     .price-detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f5f5f5; gap: 0.5rem; min-width: 0; overflow: hidden; }
     .price-detail-label { color: #666; font-size: 0.9rem; white-space: nowrap; flex-shrink: 0; }
     .price-detail-value { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
@@ -963,6 +966,7 @@
       .price-detail-label { font-size: 0.8rem; }
       .price-detail-value { font-size: 0.8rem; }
       .card { padding: 1rem; overflow: hidden; }
+      #price-card { overflow: visible; }
     }
     /* Disabled bid button */
     .btn-disabled {
