@@ -113,7 +113,8 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── AUTH SCREEN ─── */
 .auth-screen {
-  min-height: 100vh; min-height: 100dvh;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
   display: flex; align-items: flex-start;
   justify-content: center;
   padding: 1rem;
@@ -121,17 +122,18 @@ a { color: inherit; text-decoration: none; }
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   padding-left: max(1rem, env(safe-area-inset-left, 0px));
   padding-right: max(1rem, env(safe-area-inset-right, 0px));
-  position: relative; z-index: 1;
+  z-index: 1000;
   background: linear-gradient(180deg, var(--warm-50) 0%, #fff 100%);
-  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 .auth-card {
   padding: 1.5rem; width: 100%; max-width: 480px;
   background: #fff; border: 2px solid var(--border-2);
   border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
   position: relative;
-  margin-top: auto; margin-bottom: auto;
-  max-height: none;
+  margin: 1rem auto;
+  flex-shrink: 0;
 }
 .auth-card::before {
   content: ''; position: absolute; inset: 5px;
@@ -319,13 +321,13 @@ a { color: inherit; text-decoration: none; }
   .bid-next { font-size: 0.8rem; }
   .portal-body { padding: 0.75rem; }
   .field-row { grid-template-columns: 1fr; }
-  .auth-screen { padding: 0.75rem; align-items: flex-start; }
+  .auth-screen { padding: 0.75rem; padding-top: 0.5rem; }
   .auth-card { padding: 1.25rem; border-radius: 12px; }
   .auth-logo { width: 120px; margin-bottom: 0.75rem; }
   .auth-tabs { margin-bottom: 1rem; }
 }
 @media (max-width: 400px) {
-  .auth-screen { padding: 0.5rem; }
+  .auth-screen { padding: 0.5rem; padding-top: 0.25rem; }
   .auth-card { padding: 1rem; border-radius: 10px; }
   .auth-logo { width: 100px; margin-bottom: 0.5rem; }
   .auth-tabs { margin-bottom: 0.75rem; }
