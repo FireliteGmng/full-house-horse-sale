@@ -22,8 +22,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const res = await fetch('/clerk/api/check', { credentials: 'include' });
   const data = await res.json();
   if (data.isAdmin) {
-    showScreen('dashboard-screen');
-    loadDashboard();
+    // Check if there's already a live sale running
+    const stateRes = await fetch('/clerk/api/state', { credentials: 'include' });
+    const state = await stateRes.json();
+    if (state && state.active_sale_id && state.status === 'live') {
+      // Auto-resume the live sale
+      currentSaleId = state.active_sale_id;
+      const salesRes = await fetch('/clerk/api/sales', { credentials: 'include' });
+      const sales = await salesRes.json();
+      currentSale = sales.find(s => s.id === state.active_sale_id);
+      enterLiveSale();
+    } else {
+      showScreen('dashboard-screen');
+      loadDashboard();
+    }
   }
 });
 
