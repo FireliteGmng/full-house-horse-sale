@@ -130,6 +130,12 @@
         </div>
       </div>
 
+      <!-- Bid Button (directly under stream) -->
+      <div id="bid-area" class="bid-area">
+        <button class="btn btn-gold btn-lg w-full bid-btn btn-disabled" id="bid-btn" onclick="placeBid()" disabled>Place Bid</button>
+        <p class="bid-hint" id="bid-hint">Sign in to place bids.</p>
+      </div>
+
       <!-- Current Lot -->
       <div class="lot-wrapper" id="lot-wrapper">
         <div class="lot-card glass" id="lot-card">
@@ -177,12 +183,6 @@
           <h3>Preparing Next Horse</h3>
           <p>The clerk is getting the next lot ready. Please stand by.</p>
         </div>
-      </div>
-
-      <!-- Bid Button -->
-      <div id="bid-area" class="bid-area">
-        <button class="btn btn-gold btn-lg w-full bid-btn btn-disabled" id="bid-btn" onclick="placeBid()" disabled>Place Bid</button>
-        <p class="bid-hint" id="bid-hint">Sign in to place bids.</p>
       </div>
 
     </div>
