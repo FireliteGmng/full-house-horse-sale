@@ -103,7 +103,7 @@ function applyState(state) {
   const bid = state.current_bid || animal.starting_price || 0;
   document.getElementById('bid-amount').textContent = '$' + fmt(bid);
 
-  const bidder = state.current_bidder_number ? 'Buyer #' + state.current_bidder_number : '\u2014';
+  const bidder = state.current_bid > 0 ? (state.current_bid_type === 'online' ? 'Online' : 'In-Person') : '—';
   document.getElementById('bidder-value').textContent = bidder;
 
   updateNextBid(bid, animal.increment);

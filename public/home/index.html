@@ -1137,7 +1137,7 @@
                 <span class="lot-num-val" id="lot-next">$0</span>
               </div>
               <div class="lot-num-block">
-                <span class="lot-num-label">High Bidder</span>
+                <span class="lot-num-label">Bid Status</span>
                 <span class="lot-num-val" id="lot-bidder">--</span>
               </div>
             </div>
@@ -1176,8 +1176,8 @@
           </div>
 
           <div class="price-detail-row">
-            <span class="price-detail-label">High Bidder</span>
-            <span class="price-detail-value" id="home-high-bidder">—</span>
+            <span class="price-detail-label">Status</span>
+            <span class="price-detail-value" id="home-high-bidder">Active</span>
           </div>
         </div>
       </div>
@@ -1348,7 +1348,7 @@ function initSocket() {
     document.getElementById('home-current-price').textContent = '$' + Number(data.amount).toLocaleString();
     const inc = currentState && currentState.current_animal ? (currentState.current_animal.increment || 100) : 100;
     document.getElementById('home-next-bid').textContent = '$' + (Number(data.amount) + inc).toLocaleString();
-    document.getElementById('home-high-bidder').textContent = data.bidType === 'online' ? '#' + data.bidderNumber : 'In-person';
+    document.getElementById('home-high-bidder').textContent = 'Active';
     flashCard('lot-card');
     flashCard('price-card');
   });
@@ -1504,11 +1504,11 @@ function showActiveLot(state) {
   document.getElementById('lot-bid').textContent = '$' + (state.current_bid || 0).toLocaleString();
   const next = (state.current_bid || 0) + (a.increment || 100);
   document.getElementById('lot-next').textContent = '$' + next.toLocaleString();
-  document.getElementById('lot-bidder').textContent = state.current_bidder_number ? '#' + state.current_bidder_number : '--';
+  document.getElementById('lot-bidder').textContent = state.current_bid > 0 ? 'Active' : '--';
   // Update current price card
   document.getElementById('home-current-price').textContent = '$' + (state.current_bid || 0).toLocaleString();
   document.getElementById('home-next-bid').textContent = '$' + next.toLocaleString();
-  document.getElementById('home-high-bidder').textContent = state.current_bidder_number ? '#' + state.current_bidder_number : '\u2014';
+  document.getElementById('home-high-bidder').textContent = state.current_bid > 0 ? 'Active' : '—';
 
   const statusEl = document.getElementById('lot-status');
   if (state.lot_status === 'sold') {
