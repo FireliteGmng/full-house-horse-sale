@@ -238,6 +238,32 @@ a { color: inherit; text-decoration: none; }
 }
 .pending-lock-btn:hover { background: var(--accent-hover); }
 
+/* ─── STREAM TAP OVERLAY (iOS autoplay fix) ─── */
+.stream-tap-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+  cursor: pointer;
+  border-radius: inherit;
+}
+.stream-tap-content {
+  text-align: center;
+  color: #fff;
+}
+.stream-tap-content svg {
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+.stream-tap-content p {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
 /* ─── HEADER ─── */
 .bidder-header {
   height: 60px; background: #fff;
