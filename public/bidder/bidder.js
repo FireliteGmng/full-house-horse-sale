@@ -190,7 +190,7 @@ socket.on('bid', (bid) => {
   amountEl.classList.add('bump');
 
   // Update "Your Status" — check if this bid is from us or someone else
-  const isMine = currentUser && bid.bidType === 'online' && bid.bidderNumber === currentUser.buyer_number;
+  const isMine = currentUser && bid.bidType === 'online' && String(bid.bidderNumber) === String(currentUser.buyer_number);
   const statusEl = document.getElementById('lot-status');
   if (statusEl) {
     if (isMine) {
@@ -451,8 +451,8 @@ function updateYourStatus(state) {
     statusEl.className = 'bid-status';
     return;
   }
-  // Check if current user is the high bidder
-  if (state.current_bidder_number && state.current_bidder_number === currentUser.buyer_number) {
+  // Check if current user is the high bidder (use String() to handle int/string mismatch)
+  if (state.current_bidder_number && String(state.current_bidder_number) === String(currentUser.buyer_number)) {
     statusEl.textContent = "You're Leading!";
     statusEl.className = 'bid-status status-leading';
   } else if (state.current_bid && state.current_bid > 0) {
@@ -473,7 +473,7 @@ function addFeedItem(bid) {
   bidCount++;
   document.getElementById('feed-count').textContent = bidCount + (bidCount === 1 ? ' bid' : ' bids');
 
-  const isMine = currentUser && bid.bidType === 'online' && bid.bidderNumber === currentUser.buyer_number;
+  const isMine = currentUser && bid.bidType === 'online' && String(bid.bidderNumber) === String(currentUser.buyer_number);
   const item = document.createElement('div');
   item.className = 'feed-item new' + (isMine ? ' mine' : '');
   item.innerHTML = `
