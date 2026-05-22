@@ -1395,6 +1395,27 @@ function initSocket() {
 
 let homeStreamUrl = null;
 let homeStreamLoaded = false;
+let homeStreamKeepaliveTimer = null;
+
+function startHomeStreamKeepalive() {
+  stopHomeStreamKeepalive();
+  homeStreamKeepaliveTimer = setInterval(() => {
+    if (!homeStreamLoaded || !homeStreamUrl) return;
+    const iframe = document.getElementById('stream-iframe');
+    if (!iframe) return;
+    if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+      console.log('[Home Stream Keepalive] Stream stopped, reloading...');
+      iframe.src = homeStreamUrl;
+    }
+  }, 15000);
+}
+
+function stopHomeStreamKeepalive() {
+  if (homeStreamKeepaliveTimer) {
+    clearInterval(homeStreamKeepaliveTimer);
+    homeStreamKeepaliveTimer = null;
+  }
+}
 
 // ─── APPLY STATE ────────────────────────────────────────────────────────────
 function applyState(state) {
@@ -1411,6 +1432,7 @@ function applyState(state) {
       homeStreamUrl = state.youtube_url;
       iframe.src = state.youtube_url;
       homeStreamLoaded = true;
+      startHomeStreamKeepalive();
     }
     idle.classList.add('hidden');
     badge.textContent = 'Live';
@@ -1420,6 +1442,7 @@ function applyState(state) {
     // Only hide when explicitly disabled
     homeStreamUrl = null;
     homeStreamLoaded = false;
+    stopHomeStreamKeepalive();
     iframe.src = '';
     iframe.classList.add('hidden');
     idle.classList.remove('hidden');

@@ -287,6 +287,7 @@ function showStream(url) {
   if (!streamLoaded) {
     iframe.src = url;
     streamLoaded = true;
+    startStreamKeepalive();
   }
   iframe.classList.remove('hidden');
 }
@@ -300,6 +301,34 @@ function hideStream() {
   streamPlaceholder.classList.remove('hidden');
   document.getElementById('stream-badge').textContent = 'Waiting';
   document.getElementById('stream-badge').className = 'badge badge-muted';
+  stopStreamKeepalive();
+}
+
+// ─── STREAM KEEPALIVE PING ───────────────────────────────────────────────
+// Periodically checks if the stream iframe is still alive.
+// If the iframe has been removed from DOM or src is empty, force reload it.
+// This does NOT pause/restart a playing stream — it only recovers stopped ones.
+let streamKeepaliveTimer = null;
+
+function startStreamKeepalive() {
+  stopStreamKeepalive();
+  streamKeepaliveTimer = setInterval(() => {
+    if (!streamLoaded || !lastStreamUrl) return;
+    const iframe = document.getElementById('stream-iframe');
+    if (!iframe) return;
+    // If iframe src got cleared somehow or iframe is hidden when it shouldn't be
+    if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+      console.log('[Stream Keepalive] Stream stopped, reloading...');
+      iframe.src = lastStreamUrl;
+    }
+  }, 15000); // Check every 15 seconds
+}
+
+function stopStreamKeepalive() {
+  if (streamKeepaliveTimer) {
+    clearInterval(streamKeepaliveTimer);
+    streamKeepaliveTimer = null;
+  }
 }
 
 // ─── LOT TRANSITION ───────────────────────────────────────────────────────
