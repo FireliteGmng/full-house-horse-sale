@@ -14,6 +14,7 @@ let currentState = null;
 let bidCount = 0;
 let lotTransitioning = false;
 let lastStreamUrl = null; // Track stream URL independently
+let streamLoaded = false; // Track if stream iframe is already playing
 
 // ─── INIT ─────────────────────────────────────────────────────────────────
 async function init() {
@@ -202,8 +203,12 @@ socket.on('you_won', (data) => {
 
 socket.on('stream_display_toggled', (data) => {
   if (data.stream_display_enabled && data.youtube_url) {
-    lastStreamUrl = data.youtube_url;
-    showStream(data.youtube_url);
+    // Only reload if URL actually changed
+    if (data.youtube_url !== lastStreamUrl) {
+      lastStreamUrl = data.youtube_url;
+      streamLoaded = false; // Force reload with new URL
+      showStream(data.youtube_url);
+    }
   } else {
     lastStreamUrl = null;
     hideStream();
@@ -243,28 +248,19 @@ function updateStream(state) {
   // Only hide the stream if the server EXPLICITLY says stream_display_enabled === false
   // Never hide it just because the field is missing/undefined
   if (state.stream_display_enabled === true && state.youtube_url) {
-    // Stream should be showing
-    if (state.youtube_url !== lastStreamUrl) {
+    // Stream should be showing — but NEVER reload if already playing
+    if (!streamLoaded || state.youtube_url !== lastStreamUrl) {
       lastStreamUrl = state.youtube_url;
       showStream(state.youtube_url);
-    } else {
-      // Just make sure it's still visible (don't reload iframe)
-      const iframe = document.getElementById('stream-iframe');
-      const streamPlaceholder = document.getElementById('stream-placeholder');
-      if (iframe.classList.contains('hidden')) {
-        iframe.classList.remove('hidden');
-        streamPlaceholder.classList.add('hidden');
-      }
-      document.getElementById('stream-badge').textContent = 'Live';
-      document.getElementById('stream-badge').className = 'badge badge-green';
     }
+    // Otherwise do nothing — stream is already playing, don't touch it
   } else if (state.stream_display_enabled === false) {
     // ONLY hide if server explicitly says disabled
     lastStreamUrl = null;
+    streamLoaded = false;
     hideStream();
   }
   // If stream_display_enabled is undefined/null/missing, leave stream as-is
-  // This prevents the stream from disappearing during state transitions
 }
 
 function showStream(url) {
@@ -275,9 +271,10 @@ function showStream(url) {
   document.getElementById('stream-badge').textContent = 'Live';
   document.getElementById('stream-badge').className = 'badge badge-green';
 
-  // Only set src if it changed (prevents reloading/pausing the stream)
-  if (iframe.src !== url) {
+  // ONLY set iframe src if stream is not already loaded (prevents pausing)
+  if (!streamLoaded) {
     iframe.src = url;
+    streamLoaded = true;
   }
   iframe.classList.remove('hidden');
 }
@@ -286,6 +283,7 @@ function hideStream() {
   const iframe = document.getElementById('stream-iframe');
   const streamPlaceholder = document.getElementById('stream-placeholder');
   iframe.src = '';
+  streamLoaded = false;
   iframe.classList.add('hidden');
   streamPlaceholder.classList.remove('hidden');
   document.getElementById('stream-badge').textContent = 'Waiting';
