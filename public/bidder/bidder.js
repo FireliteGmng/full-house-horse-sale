@@ -267,8 +267,6 @@ function updateStream(state) {
   // This prevents the stream from disappearing during state transitions
 }
 
-let streamRefreshInterval = null;
-
 function showStream(url) {
   const iframe = document.getElementById('stream-iframe');
   const streamPlaceholder = document.getElementById('stream-placeholder');
@@ -277,12 +275,11 @@ function showStream(url) {
   document.getElementById('stream-badge').textContent = 'Live';
   document.getElementById('stream-badge').className = 'badge badge-green';
 
-  // Always load the iframe — YouTube controls are enabled so users can tap play on iOS
+  // Only set src if it changed (prevents reloading/pausing the stream)
   if (iframe.src !== url) {
     iframe.src = url;
   }
   iframe.classList.remove('hidden');
-  startStreamAutoRefresh();
 }
 
 function hideStream() {
@@ -293,26 +290,6 @@ function hideStream() {
   streamPlaceholder.classList.remove('hidden');
   document.getElementById('stream-badge').textContent = 'Waiting';
   document.getElementById('stream-badge').className = 'badge badge-muted';
-  stopStreamAutoRefresh();
-}
-
-// Auto-refresh stream every 10 seconds to prevent pausing and keep it live
-function startStreamAutoRefresh() {
-  stopStreamAutoRefresh(); // Clear any existing interval
-  streamRefreshInterval = setInterval(() => {
-    if (!lastStreamUrl) return;
-    const iframe = document.getElementById('stream-iframe');
-    if (!iframe || iframe.classList.contains('hidden')) return;
-    // Re-set the src to force reload the stream (keeps it live)
-    iframe.src = lastStreamUrl;
-  }, 10000);
-}
-
-function stopStreamAutoRefresh() {
-  if (streamRefreshInterval) {
-    clearInterval(streamRefreshInterval);
-    streamRefreshInterval = null;
-  }
 }
 
 // ─── LOT TRANSITION ───────────────────────────────────────────────────────
