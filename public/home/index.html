@@ -1095,13 +1095,7 @@
             </div>
             <p>Stream will appear here when the sale begins</p>
           </div>
-          <div id="stream-tap-overlay" class="stream-tap-overlay hidden" onclick="handleHomeStreamTap()">
-            <div class="stream-tap-content">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48"><path d="M8 5v14l11-7z"/></svg>
-              <p>Tap to start live stream</p>
-            </div>
-          </div>
-          <iframe id="stream-iframe" class="stream-iframe hidden" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>
+          <iframe id="stream-iframe" class="stream-iframe hidden" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope" style="pointer-events:auto;"></iframe>
         </div>
       </div>
 
@@ -1375,26 +1369,18 @@ function initSocket() {
     const iframe = document.getElementById('stream-iframe');
     const idle = document.getElementById('stream-idle');
     const badge = document.getElementById('stream-badge');
-    const tapOverlay = document.getElementById('stream-tap-overlay');
     if (data.stream_display_enabled && data.youtube_url) {
       homeStreamUrl = data.youtube_url;
+      iframe.src = data.youtube_url;
+      iframe.classList.remove('hidden');
       idle.classList.add('hidden');
       badge.textContent = 'Live';
       document.getElementById('nav-live').classList.remove('hidden');
-      if (isIOSSafari() && !homeStreamUserActivated) {
-        iframe.classList.add('hidden');
-        if (tapOverlay) tapOverlay.classList.remove('hidden');
-      } else {
-        iframe.src = data.youtube_url;
-        iframe.classList.remove('hidden');
-        if (tapOverlay) tapOverlay.classList.add('hidden');
-        startHomeStreamAutoRefresh();
-      }
+      startHomeStreamAutoRefresh();
     } else {
       homeStreamUrl = null;
       iframe.src = '';
       iframe.classList.add('hidden');
-      if (tapOverlay) tapOverlay.classList.add('hidden');
       idle.classList.remove('hidden');
       badge.textContent = 'Waiting for stream';
       document.getElementById('nav-live').classList.add('hidden');
@@ -1406,24 +1392,6 @@ function initSocket() {
 // ─── STREAM AUTO-REFRESH (keeps stream live, prevents pausing) ──────────────
 let homeStreamUrl = null;
 let homeStreamRefreshInterval = null;
-let homeStreamUserActivated = false;
-
-function isIOSSafari() {
-  const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-function handleHomeStreamTap() {
-  homeStreamUserActivated = true;
-  const iframe = document.getElementById('stream-iframe');
-  const tapOverlay = document.getElementById('stream-tap-overlay');
-  if (tapOverlay) tapOverlay.classList.add('hidden');
-  if (homeStreamUrl) {
-    iframe.src = homeStreamUrl;
-  }
-  iframe.classList.remove('hidden');
-  startHomeStreamAutoRefresh();
-}
 
 function startHomeStreamAutoRefresh() {
   if (homeStreamRefreshInterval) clearInterval(homeStreamRefreshInterval);
@@ -1451,31 +1419,20 @@ function applyState(state) {
   const iframe = document.getElementById('stream-iframe');
   const idle = document.getElementById('stream-idle');
   const badge = document.getElementById('stream-badge');
-  const tapOverlay = document.getElementById('stream-tap-overlay');
   if (state.stream_display_enabled === true && state.youtube_url) {
     homeStreamUrl = state.youtube_url;
     idle.classList.add('hidden');
     badge.textContent = 'Live';
     document.getElementById('nav-live').classList.remove('hidden');
-
-    if (isIOSSafari() && !homeStreamUserActivated) {
-      // iOS Safari: show tap overlay
-      iframe.classList.add('hidden');
-      if (tapOverlay) tapOverlay.classList.remove('hidden');
-    } else {
-      // Non-iOS or already activated: load directly
-      if (iframe.src !== state.youtube_url) {
-        iframe.src = state.youtube_url;
-      }
-      iframe.classList.remove('hidden');
-      if (tapOverlay) tapOverlay.classList.add('hidden');
-      startHomeStreamAutoRefresh();
+    if (iframe.src !== state.youtube_url) {
+      iframe.src = state.youtube_url;
     }
+    iframe.classList.remove('hidden');
+    startHomeStreamAutoRefresh();
   } else if (state.stream_display_enabled === false) {
     // Only hide when explicitly disabled
     homeStreamUrl = null;
     iframe.src = '';
-    if (tapOverlay) tapOverlay.classList.add('hidden');
     iframe.classList.add('hidden');
     idle.classList.remove('hidden');
     badge.textContent = 'Waiting for stream';

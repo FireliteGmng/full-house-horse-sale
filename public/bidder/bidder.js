@@ -268,44 +268,18 @@ function updateStream(state) {
 }
 
 let streamRefreshInterval = null;
-let streamUserActivated = false; // Track if user has tapped to start stream
-
-function isIOSSafari() {
-  const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
 
 function showStream(url) {
   const iframe = document.getElementById('stream-iframe');
   const streamPlaceholder = document.getElementById('stream-placeholder');
-  const tapOverlay = document.getElementById('stream-tap-overlay');
 
   streamPlaceholder.classList.add('hidden');
   document.getElementById('stream-badge').textContent = 'Live';
   document.getElementById('stream-badge').className = 'badge badge-green';
 
-  if (isIOSSafari() && !streamUserActivated) {
-    // On iOS Safari, show tap overlay first — autoplay won't work without user gesture
-    iframe.classList.add('hidden');
-    if (tapOverlay) tapOverlay.classList.remove('hidden');
-  } else {
-    // Non-iOS or user already tapped — load directly
-    if (iframe.src !== url) {
-      iframe.src = url;
-    }
-    iframe.classList.remove('hidden');
-    if (tapOverlay) tapOverlay.classList.add('hidden');
-    startStreamAutoRefresh();
-  }
-}
-
-function handleStreamTap() {
-  streamUserActivated = true;
-  const iframe = document.getElementById('stream-iframe');
-  const tapOverlay = document.getElementById('stream-tap-overlay');
-  if (tapOverlay) tapOverlay.classList.add('hidden');
-  if (lastStreamUrl) {
-    iframe.src = lastStreamUrl;
+  // Always load the iframe — YouTube controls are enabled so users can tap play on iOS
+  if (iframe.src !== url) {
+    iframe.src = url;
   }
   iframe.classList.remove('hidden');
   startStreamAutoRefresh();
@@ -314,11 +288,9 @@ function handleStreamTap() {
 function hideStream() {
   const iframe = document.getElementById('stream-iframe');
   const streamPlaceholder = document.getElementById('stream-placeholder');
-  const tapOverlay = document.getElementById('stream-tap-overlay');
   iframe.src = '';
   iframe.classList.add('hidden');
   streamPlaceholder.classList.remove('hidden');
-  if (tapOverlay) tapOverlay.classList.add('hidden');
   document.getElementById('stream-badge').textContent = 'Waiting';
   document.getElementById('stream-badge').className = 'badge badge-muted';
   stopStreamAutoRefresh();

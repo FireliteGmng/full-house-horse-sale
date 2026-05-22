@@ -126,13 +126,7 @@
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="4" y="8" width="40" height="28" rx="3"/><path d="M16 44h16M24 36v8"/><path d="M20 20l10 4-10 4V20z" fill="currentColor" stroke="none"/></svg>
             <p>Stream will appear here when the sale begins</p>
           </div>
-          <div id="stream-tap-overlay" class="stream-tap-overlay hidden" onclick="handleStreamTap()">
-            <div class="stream-tap-content">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48"><path d="M8 5v14l11-7z"/></svg>
-              <p>Tap to start live stream</p>
-            </div>
-          </div>
-          <iframe id="stream-iframe" class="stream-iframe hidden" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope"></iframe>
+          <iframe id="stream-iframe" class="stream-iframe hidden" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope" style="pointer-events:auto;"></iframe>
         </div>
       </div>
 

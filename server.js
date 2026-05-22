@@ -282,9 +282,14 @@ app.get('/clerk/api/settings/stream-display', requireAdmin, (req, res) => {
 // Helper: convert YouTube watch URL to embed URL with autoplay and no branding
 function buildYoutubeEmbed(url) {
   if (!url) return '';
-  const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  if (!m) return '';
-  return `https://www.youtube.com/embed/${m[1]}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&loop=1&playlist=${m[1]}`;
+  // Support youtube.com/live/ID, youtube.com/watch?v=ID, youtu.be/ID
+  let videoId = null;
+  const liveMatch = url.match(/youtube\.com\/live\/([A-Za-z0-9_-]+)/);
+  const watchMatch = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (liveMatch) videoId = liveMatch[1];
+  else if (watchMatch) videoId = watchMatch[1];
+  if (!videoId) return '';
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&playsinline=1&loop=1&playlist=${videoId}`;
 }
 
 // Helper: enrich any state object with stream info before emitting
