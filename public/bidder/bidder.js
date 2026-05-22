@@ -59,8 +59,6 @@ function setUser(buyer) {
     document.getElementById('denied-lock-screen').classList.add('hidden');
     document.getElementById('bidder-portal').classList.remove('hidden');
     document.getElementById('user-name-label').textContent = buyer.full_name;
-    document.getElementById('buyer-number-badge').textContent = 'Buyer #' + buyer.buyer_number;
-    document.getElementById('buyer-number-badge').classList.remove('hidden');
     updateBidButton();
     // Join buyer room for private notifications
     socket.emit('join_buyer', buyer.buyer_number);
@@ -190,6 +188,22 @@ socket.on('bid', (bid) => {
   amountEl.classList.remove('bump');
   void amountEl.offsetWidth;
   amountEl.classList.add('bump');
+
+  // Update "Your Status" — check if this bid is from us or someone else
+  const isMine = currentUser && bid.bidType === 'online' && bid.bidderNumber === currentUser.buyer_number;
+  const statusEl = document.getElementById('lot-status');
+  if (statusEl) {
+    if (isMine) {
+      statusEl.textContent = "You're Leading!";
+      statusEl.className = 'bid-status status-leading';
+    } else {
+      // Someone else bid — if we WERE leading, now we're outbid
+      if (statusEl.textContent === "You're Leading!") {
+        statusEl.textContent = 'Outbid';
+        statusEl.className = 'bid-status status-outbid';
+      }
+    }
+  }
 });
 
 socket.on('sold', (data) => {
@@ -224,12 +238,10 @@ socket.on('account_approved', (data) => {
     document.getElementById('pending-lock-screen').classList.add('hidden');
     document.getElementById('bidder-portal').classList.remove('hidden');
     document.getElementById('user-name-label').textContent = currentUser.full_name;
-    document.getElementById('buyer-number-badge').textContent = 'Buyer #' + data.buyer_number;
-    document.getElementById('buyer-number-badge').classList.remove('hidden');
     updateBidButton();
     socket.emit('join_buyer', data.buyer_number);
     // Show approval notification
-    addNotification('Your account has been approved! You are now Buyer #' + data.buyer_number + '. You can place bids.');
+    addNotification('Your account has been approved! You can now place bids.');
   }
 });
 
@@ -380,8 +392,8 @@ function renderAnimalCard(animal, state) {
   document.getElementById('lot-desc').textContent = animal.description || '';
 
   const bid = state.current_bid || animal.starting_price || 0;
-  const bidder = state.current_bidder_number ? '#' + state.current_bidder_number : '\u2014';
-  document.getElementById('lot-bidder').textContent = bidder;
+  // Show "You're Leading" or "Outbid" based on whether this user is the current high bidder
+  updateYourStatus(state);
 
   const inc = animal.increment || 100;
   document.getElementById('lot-next').textContent = '$' + fmt(bid + inc);
@@ -391,6 +403,28 @@ function showIdleLot() {
   document.getElementById('lot-idle').classList.remove('hidden');
   document.getElementById('lot-active').classList.add('hidden');
   document.getElementById('lot-waiting').classList.add('hidden');
+}
+
+// ─── YOUR STATUS ───────────────────────────────────────────────────────────
+function updateYourStatus(state) {
+  const statusEl = document.getElementById('lot-status');
+  if (!statusEl) return;
+  if (!currentUser || !currentUser.buyer_number) {
+    statusEl.textContent = '—';
+    statusEl.className = 'bid-status';
+    return;
+  }
+  // Check if current user is the high bidder
+  if (state.current_bidder_number && state.current_bidder_number === currentUser.buyer_number) {
+    statusEl.textContent = "You're Leading!";
+    statusEl.className = 'bid-status status-leading';
+  } else if (state.current_bid && state.current_bid > 0) {
+    statusEl.textContent = 'Outbid';
+    statusEl.className = 'bid-status status-outbid';
+  } else {
+    statusEl.textContent = '—';
+    statusEl.className = 'bid-status';
+  }
 }
 
 // ─── FEED ─────────────────────────────────────────────────────────────────
@@ -408,7 +442,7 @@ function addFeedItem(bid) {
   item.innerHTML = `
     <span class="feed-dot ${bid.bidType}"></span>
     <span class="feed-amount">$${fmt(bid.amount)}</span>
-    <span class="feed-who">${bid.bidType === 'online' ? 'Buyer #' + bid.bidderNumber + (isMine ? ' (You)' : '') : 'In-person'}</span>
+    <span class="feed-who">${isMine ? 'You' : (bid.bidType === 'online' ? 'Online Bidder' : 'In-person')}</span>
   `;
   list.insertBefore(item, list.firstChild);
   setTimeout(() => item.classList.remove('new'), 800);

@@ -238,6 +238,18 @@ a { color: inherit; text-decoration: none; }
 }
 .pending-lock-btn:hover { background: var(--accent-hover); }
 
+/* ─── YOUR STATUS INDICATOR ─── */
+.bid-status {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.status-leading {
+  color: #16a34a;
+}
+.status-outbid {
+  color: #dc2626;
+}
+
 /* ─── STREAM TAP OVERLAY (iOS autoplay fix) ─── */
 .stream-tap-overlay {
   position: absolute;

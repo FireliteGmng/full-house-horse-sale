@@ -421,6 +421,54 @@ body.is-dragging .animal-item { transition: transform 0.25s ease; }
   font-size: 0.7rem;
 }
 
+/* ─── LIVE ACTIVITY LOG ─── */
+.live-activity-log {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1rem;
+}
+.activity-log-list {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: #f8fdf8;
+}
+.activity-log-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.78rem;
+  animation: logFadeIn 0.3s ease;
+}
+.activity-log-item:last-child { border-bottom: none; }
+@keyframes logFadeIn {
+  from { opacity: 0; background: #dcfce7; }
+  to { opacity: 1; background: transparent; }
+}
+.activity-log-item.online-log { border-left: 3px solid #3b82f6; }
+.activity-log-item.inperson-log { border-left: 3px solid #eab308; }
+.activity-log-item.system-log { border-left: 3px solid #8b5cf6; }
+.log-time {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  min-width: 50px;
+}
+.log-text { flex: 1; color: var(--text); }
+.log-amount { font-weight: 700; color: var(--green); }
+.log-type {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.log-type.online { background: #dbeafe; color: #1d4ed8; }
+.log-type.inperson { background: #fef3c7; color: #92400e; }
+
 /* ─── BUYER DETAIL MODAL ─── */
 .modal-lg {
   max-width: 550px;

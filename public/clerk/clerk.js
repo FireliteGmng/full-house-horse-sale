@@ -1191,6 +1191,8 @@ socket.on('bid', (data) => {
       alertEl.classList.remove('hidden');
       setTimeout(() => alertEl.classList.add('hidden'), 4000);
     }
+    // Add to live activity log
+    addActivityLogItem(data);
     // Update bid display
     if (saleState) {
       saleState.current_bid = data.amount;
@@ -1217,6 +1219,38 @@ socket.on('animals_updated', () => {
     loadLiveLineup();
   }
 });
+
+// ─── LIVE ACTIVITY LOG ───────────────────────────────────────────────────────────
+function addActivityLogItem(data) {
+  const list = document.getElementById('activity-log-list');
+  if (!list) return;
+  const empty = list.querySelector('.list-empty');
+  if (empty) empty.remove();
+
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const typeClass = data.bidType === 'online' ? 'online-log' : 'inperson-log';
+  const typeLabel = data.bidType === 'online' ? 'Online' : 'In-Person';
+  const bidderInfo = data.bidType === 'online'
+    ? `${data.bidderName || 'Unknown'} (#${data.bidderNumber})`
+    : 'Floor Bidder';
+
+  const item = document.createElement('div');
+  item.className = 'activity-log-item ' + typeClass;
+  item.innerHTML = `
+    <span class="log-time">${time}</span>
+    <span class="log-type ${data.bidType}">${typeLabel}</span>
+    <span class="log-amount">$${fmt(data.amount)}</span>
+    <span class="log-text">${bidderInfo}</span>
+  `;
+  list.insertBefore(item, list.firstChild);
+  // Keep max 100 entries
+  while (list.children.length > 100) list.removeChild(list.lastChild);
+}
+
+function clearActivityLog() {
+  const list = document.getElementById('activity-log-list');
+  if (list) list.innerHTML = '<div class="list-empty">Waiting for activity...</div>';
+}
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function esc(str) {
