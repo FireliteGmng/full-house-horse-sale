@@ -289,7 +289,7 @@ function buildYoutubeEmbed(url) {
   if (liveMatch) videoId = liveMatch[1];
   else if (watchMatch) videoId = watchMatch[1];
   if (!videoId) return '';
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&modestbranding=1&rel=0&playsinline=1`;
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&modestbranding=1&rel=0&playsinline=1&live=1`;
 }
 
 // Helper: enrich any state object with stream info before emitting

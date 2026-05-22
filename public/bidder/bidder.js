@@ -305,23 +305,31 @@ function hideStream() {
 }
 
 // ─── STREAM KEEPALIVE PING ───────────────────────────────────────────────
-// Periodically checks if the stream iframe is still alive.
-// If the iframe has been removed from DOM or src is empty, force reload it.
-// This does NOT pause/restart a playing stream — it only recovers stopped ones.
+// On mobile: periodically reloads the stream to re-sync to live edge
+// (prevents the stream from falling behind over time)
+// On desktop: only recovers if stream stopped
 let streamKeepaliveTimer = null;
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 function startStreamKeepalive() {
   stopStreamKeepalive();
+  const interval = isMobile ? 60000 : 15000; // Mobile: re-sync every 60s, Desktop: check every 15s
   streamKeepaliveTimer = setInterval(() => {
     if (!streamLoaded || !lastStreamUrl) return;
     const iframe = document.getElementById('stream-iframe');
     if (!iframe) return;
-    // If iframe src got cleared somehow or iframe is hidden when it shouldn't be
-    if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
-      console.log('[Stream Keepalive] Stream stopped, reloading...');
+    if (isMobile) {
+      // Mobile: force reload to re-sync to live edge (prevents drift)
+      console.log('[Stream Keepalive] Re-syncing to live edge...');
       iframe.src = lastStreamUrl;
+    } else {
+      // Desktop: only reload if stream actually stopped
+      if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+        console.log('[Stream Keepalive] Stream stopped, reloading...');
+        iframe.src = lastStreamUrl;
+      }
     }
-  }, 15000); // Check every 15 seconds
+  }, interval);
 }
 
 function stopStreamKeepalive() {

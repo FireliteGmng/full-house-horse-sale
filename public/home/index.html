@@ -1397,17 +1397,26 @@ let homeStreamUrl = null;
 let homeStreamLoaded = false;
 let homeStreamKeepaliveTimer = null;
 
+const isMobileHome = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 function startHomeStreamKeepalive() {
   stopHomeStreamKeepalive();
+  const interval = isMobileHome ? 60000 : 15000;
   homeStreamKeepaliveTimer = setInterval(() => {
     if (!homeStreamLoaded || !homeStreamUrl) return;
     const iframe = document.getElementById('stream-iframe');
     if (!iframe) return;
-    if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
-      console.log('[Home Stream Keepalive] Stream stopped, reloading...');
+    if (isMobileHome) {
+      // Mobile: force reload to re-sync to live edge
+      console.log('[Home Stream Keepalive] Re-syncing to live edge...');
       iframe.src = homeStreamUrl;
+    } else {
+      if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+        console.log('[Home Stream Keepalive] Stream stopped, reloading...');
+        iframe.src = homeStreamUrl;
+      }
     }
-  }, 15000);
+  }, interval);
 }
 
 function stopHomeStreamKeepalive() {
